@@ -403,6 +403,146 @@ void drawCoridor2() {
 
 }
 
+void drawEnv1() {
+
+	// Draw boundary walls around the court
+	glColor3f(1.0f, 0.0f, 0.0f);
+
+	//----------------------------
+
+	// Back wall
+	glPushMatrix();
+	glTranslatef(-3.7f, 1.0f, -13.4f);  // Adjusted to match the court boundary
+	drawWall(4.5, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(3.7f, 1.0f, -13.4f);  // Adjusted to match the court boundary
+	drawWall(4.5, 2.0, 0.2);
+	glPopMatrix();
+
+	// Left wall
+	glPushMatrix();
+	glTranslatef(-6.0f, 1.0f, 0.0f);   // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(27.0, 2.0, 0.2);
+	glPopMatrix();
+
+	// Right wall
+	glPushMatrix();
+	glTranslatef(6.0f, 1.0f, -7.5f);    // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(11.5, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(6.0f, 1.0f, 7.5f);    // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(11.5, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0f, 1.0f, 13.4f);  // Adjusted to match the court boundary
+	drawWall(12.0, 2.0, 0.2);
+	glPopMatrix();
+
+	//------------------------
+
+	glPushMatrix();
+	glTranslatef(21.0f, 1.0f, 0.0f);    // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(21.0, 2.0, 0.2);
+	glPopMatrix();
+
+	// Back wall
+	glPushMatrix();
+	glTranslatef(15.0f, 1.0f, -10.4f);  // Adjusted to match the court boundary
+	drawWall(12.0, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(15.0f, 1.0f, 10.4f);  // Adjusted to match the court boundary
+	drawWall(12.0, 2.0, 0.2);
+	glPopMatrix();
+
+	//--------------------
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, -27.0f);
+	glPushMatrix();
+	glTranslatef(0.0f, 1.0f, -13.4f);  // Adjusted to match the court boundary
+	drawWall(12.0, 2.0, 0.2);
+	glPopMatrix();
+
+	// Left wall
+	glPushMatrix();
+	glTranslatef(-6.0f, 1.0f, -3.0f);   // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(21.0, 2.0, 0.2);
+	glPopMatrix();
+
+	// Right wall
+	glPushMatrix();
+	glTranslatef(6.0f, 1.0f, -3.0f);    // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(21.0, 2.0, 0.2);
+	glPopMatrix();
+	glPopMatrix();
+
+	//----------------------
+
+	glPushMatrix();
+	glTranslatef(-3.8f, 1.0f, -19.6f);  // Adjusted to match the court boundary
+	drawWall(4.5, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(3.8f, 1.0f, -19.6f);  // Adjusted to match the court boundary
+	drawWall(4.5, 2.0, 0.2);
+	glPopMatrix();
+
+	//_-------------------------
+
+	glPushMatrix();
+	glTranslatef(9.0f, 1.0f, -6.0f);    // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(8.6, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(9.0f, 1.0f, 6.0f);    // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(8.6, 2.0, 0.2);
+	glPopMatrix();
+
+	//------------------------------
+
+	glPushMatrix();
+	glTranslatef(7.6f, 1.0f, 1.8f);  // Adjusted to match the court boundary
+	drawWall(3.0, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(7.6f, 1.0f, -1.8f);  // Adjusted to match the court boundary
+	drawWall(3.0, 2.0, 0.2);
+	glPopMatrix();
+
+	//-------------------------------------------
+
+	glPushMatrix();
+	glTranslatef(-1.5f, 1.0f, -16.5f);   // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(6.0, 2.0, 0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(1.5f, 1.0f, -16.5f);   // Adjusted to match the court boundary
+	glRotatef(90, 0, 1, 0);
+	drawWall(6.0, 2.0, 0.2);
+	glPopMatrix();
+
+
+}
+
 void setupLights() {
 	GLfloat ambient[] = { 0.7f, 0.7f, 0.7, 1.0f };
 	GLfloat diffuse[] = { 0.6f, 0.6f, 0.6, 1.0f };
@@ -557,50 +697,13 @@ void Display() {
 	drawCoridor2();
 	drawPlayer();
 
+	drawEnv1();
+
 	char scoreText[20];
 	sprintf(scoreText, "Score: %d", score);  // Format score as string
 	renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
 	displayTimer();
-	// Draw boundary walls around the court
-	glColor3f(1.0f, 0.0f, 0.0f);
-
-	// Back wall
-	glPushMatrix();
-	glTranslatef(0.0f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
-	glPopMatrix();
-
-	// Left wall
-	glPushMatrix();
-	glTranslatef(-6.0f, 1.0f, 0.0f);   // Adjusted to match the court boundary
-	glRotatef(90, 0, 1, 0);
-	drawWall(27.0, 2.0, 0.2);
-	glPopMatrix();
-
-	// Right wall
-	glPushMatrix();
-	glTranslatef(6.0f, 1.0f, 0.0f);    // Adjusted to match the court boundary
-	glRotatef(90, 0, 1, 0);
-	drawWall(27.0, 2.0, 0.2);
-	glPopMatrix();
-
-	glPushMatrix();
-	glTranslatef(21.0f, 1.0f, 0.0f);    // Adjusted to match the court boundary
-	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 2.0, 0.2);
-	glPopMatrix();
-
-	// Back wall
-	glPushMatrix();
-	glTranslatef(15.0f, 1.0f, -10.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
-	glPopMatrix();
-
-	glPushMatrix();
-	glTranslatef(15.0f, 1.0f, 10.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
-	glPopMatrix();
-
+	
 
 	glFlush();
 }
