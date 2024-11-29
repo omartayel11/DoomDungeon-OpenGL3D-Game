@@ -5,7 +5,10 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <iostream>
+#include <cmath>
+#include <sstream>
 
+#include <vector>
 
 
 #define GLUT_KEY_ESCAPE 27
@@ -15,6 +18,7 @@
 
 void PlaySoundEffect(const char* filename);
 void PlayCollisionSound(const char* filename);
+void printPlayerPosition();
 
 
 class Vector3f {
@@ -45,8 +49,6 @@ bool isForehand = false;  // Whether forehand motion is happening
 float forehandAngle = 0.0f;  // The angle of the forehand motion
 float forehandSpeed = 2.0f;  // Speed at which the forehand swing occurs
 
-
-
 int score = 0;
 bool ballHit = false;
 bool ballHit2 = false;
@@ -54,6 +56,7 @@ float ballRadius = 0.5f;
 bool gameWin = false;
 bool gameLost = false;
 int timer = 3000;
+
 
 enum GameState { PLAYING, GAME_WON, GAME_LOST };
 GameState currentGameState = PLAYING;
@@ -118,6 +121,119 @@ public:
 
 Camera camera;
 
+
+class Coin {
+public:
+	float x, y, z;
+	float radius;
+	bool collected;
+
+	Coin(float _x, float _y, float _z, float _radius)
+		: x(_x), y(_y), z(_z), radius(_radius), collected(false) {}
+
+	void draw(float time) {
+		if (collected) return; // Skip drawing if the coin is collected
+
+		// Calculate the vertical offset using a sine wave for smooth up and down movement
+		float verticalOffset = 0.2f * sin(time);
+
+		glPushMatrix();
+		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
+
+		// Draw the coin (a simple cylinder for now)
+		glColor3f(1.0f, 0.84f, 0.0f); // Gold color
+		GLUquadric* quad = gluNewQuadric();
+		gluDisk(quad, 0.0f, radius, 20, 1); // Top face
+		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the side
+		gluCylinder(quad, radius, radius, 0.1f, 20, 1); // Side face
+		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the bottom face
+		gluDisk(quad, 0.0f, radius, 20, 1); // Bottom face
+		gluDeleteQuadric(quad);
+
+		glPopMatrix();
+	}
+
+	void checkCollision(float playerX, float playerZ) {
+		if (collected) return; // Skip if the coin is already collected
+
+		// Calculate the distance between the player and the coin
+		float distance = sqrt(pow(playerX - x, 2) + pow(playerZ - z, 2));
+
+		// Check if the distance is less than the sum of the radii (collision detection)
+		if (distance < radius + 0.5f) { // Assuming player radius is 0.5f
+			collected = true; // Mark the coin as collected
+			score += 100; // Increase score by 100
+			std::cout << "Coin collected! Score: " << score << std::endl;
+
+			// Optionally, you can play a sound effect
+			// PlaySoundEffect("coin_collect.wav");
+		}
+	}
+};
+Coin coin(2.0f, 1.0f, 3.0f, 0.5f);
+
+int playerHealth = 100;
+
+class Trap {
+public:
+	float x, y, z;
+	float width, depth;
+	float spikeHeight;
+	float moveSpeed;
+	bool movingUp;
+	std::vector<Vector3f> spikes;
+
+	Trap(float _x, float _y, float _z, float _width, float _depth, float _spikeHeight, float _moveSpeed)
+		: x(_x), y(_y), z(_z), width(_width), depth(_depth), spikeHeight(_spikeHeight), moveSpeed(_moveSpeed), movingUp(true) {
+		generateSpikes();
+	}
+
+	void generateSpikes() {
+		int numSpikesX = static_cast<int>(width * 2);
+		int numSpikesZ = static_cast<int>(depth * 2);
+		for (int i = 0; i < numSpikesX; ++i) {
+			for (int j = 0; j < numSpikesZ; ++j) {
+				float spikeX = x - width / 2 + i * (width / numSpikesX);
+				float spikeZ = z - depth / 2 + j * (depth / numSpikesZ);
+				spikes.push_back(Vector3f(spikeX, y, spikeZ));
+			}
+		}
+	}
+
+	void draw(float time) {
+		// Update spike movement using a sine wave for smooth and constant speed
+		float amplitude = 1.0f; // Maximum height of the spikes
+		float frequency = 1.0f; // Frequency of the movement
+		y = amplitude * sin(frequency * time);
+
+		// Draw spikes
+		glColor3f(0.5f, 0.5f, 0.5f); // Gray color for spikes
+		for (const auto& spike : spikes) {
+			glPushMatrix();
+			glTranslatef(spike.x, y, spike.z);
+			glRotatef(-90, 1.0f, 0.0f, 0.0f);
+			glutSolidCone(0.1f, spikeHeight, 10, 2);
+			glPopMatrix();
+		}
+	}
+
+	void checkCollision(float playerX, float playerZ) {
+		// Check if player is within the trap's area
+		if (playerX >= x - width / 2 && playerX <= x + width / 2 &&
+			playerZ >= z - depth / 2 && playerZ <= z + depth / 2) {
+			// Check if player is touching the spikes
+			if (y >= 0.0f && y <= 1.0f) {
+				playerHealth -= 1; // Decrease player health
+				std::cout << "Player hit by trap! Health: " << playerHealth << std::endl;
+				if (playerHealth <= 0) {
+					std::cout << "Player is dead!" << std::endl;
+					// Handle player death (e.g., end game, respawn, etc.)
+				}
+			}
+		}
+	}
+};
+Trap trap(0.0f, 1.0f, 0.0f, 2.0f, 2.0f, 0.6f, 0.01f);
 
 float playerX = -3.0f;  // Player's initial X position
 float playerZ = 10.0f;  // Player's initial Z position
@@ -331,8 +447,6 @@ void drawWall(double width, double height, double thickness) {
 	glutSolidCube(1.0);
 	glPopMatrix();
 
-	
-
 }
 
 float toRadians(float degrees) {
@@ -341,7 +455,7 @@ float toRadians(float degrees) {
 
 
 void drawCourt() {
-	
+
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
 	glTranslatef(0.0f, -0.15f, 0.0f);  // Move cube slightly below the court surface
@@ -350,11 +464,11 @@ void drawCourt() {
 	glutSolidCube(1.0f);  // Draw the ground cube
 	glPopMatrix();
 
-	
+
 }
 
 void drawRoom() {
-	
+
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
 	glTranslatef(15.0f, -0.15f, 0.0f);  // Move cube slightly below the court surface
@@ -366,7 +480,7 @@ void drawRoom() {
 }
 
 void drawRoom2() {
-	
+
 
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
@@ -543,6 +657,26 @@ void drawEnv1() {
 
 }
 
+void drawCoin(float x, float y, float z, float time) {
+	// Calculate the vertical offset using a sine wave for smooth up and down movement
+	float verticalOffset = 0.5f * sin(time);
+
+	glPushMatrix();
+	glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
+
+	// Draw the coin (a simple cylinder)
+	glColor3f(1.0f, 0.84f, 0.0f); // Gold color
+	GLUquadric* quad = gluNewQuadric();
+	gluDisk(quad, 0.0f, 0.5f, 20, 1); // Top face
+	glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the side
+	gluCylinder(quad, 0.3f, 0.3f, 0.1f, 20, 1); // Side face
+	glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the bottom face
+	gluDisk(quad, 0.0f, 0.5f, 20, 1); // Bottom face
+	gluDeleteQuadric(quad);
+
+	glPopMatrix();
+}
+
 void setupLights() {
 	GLfloat ambient[] = { 0.7f, 0.7f, 0.7, 1.0f };
 	GLfloat diffuse[] = { 0.6f, 0.6f, 0.6, 1.0f };
@@ -607,6 +741,23 @@ void updateWallColor(int value) {
 	glutTimerFunc(2000, updateWallColor, 0);
 }
 
+bool followPlayer = false; // Flag to indicate if the camera should follow the player
+
+void updateCameraPosition() {
+	if (followPlayer) {
+		// Set the camera's position to the player's head position
+		camera.setView(playerX, 1.8f, playerZ, playerX - sin(DEG2RAD(playerAngle)), 1.8f, playerZ - cos(DEG2RAD(playerAngle)));
+	}
+}
+
+bool followPlayer2 = false; // Flag to indicate if the camera should follow the player
+
+void updateCameraPosition2() {
+	if (followPlayer2) {
+		// Set the camera's position to the player's head position
+		camera.setView(playerX, 3.8f, playerZ+3, playerX - sin(DEG2RAD(playerAngle)), 1.8f, playerZ - cos(DEG2RAD(playerAngle)));
+	}
+}
 
 /*void Display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -620,10 +771,10 @@ void updateWallColor(int value) {
 
 		// Draw game elements
 		drawCourt();
-		
-		
 
-		
+
+
+
 		drawPlayer();
 
 		// Display score
@@ -682,6 +833,36 @@ void updateWallColor(int value) {
 	glFlush();
 }*/
 
+// Function to convert an integer to a string
+std::string intToString(int value) {
+	std::ostringstream oss;
+	oss << value;
+	return oss.str();
+}
+
+void renderText(const std::string& text, float x, float y, void* font = GLUT_BITMAP_HELVETICA_18) {
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
+	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
+	gluOrtho2D(0, windowWidth, 0, windowHeight);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+	glRasterPos2f(x, y);
+	for (char c : text) {
+		glutBitmapCharacter(font, c);
+	}
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
 
 void Display() {
 
@@ -696,14 +877,28 @@ void Display() {
 	drawCoridor1();
 	drawCoridor2();
 	drawPlayer();
-
+	
 	drawEnv1();
+
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+	coin.draw(time);
+	coin.checkCollision(playerX, playerZ);
+
+	float timeTrap = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+	trap.draw(timeTrap);
+	trap.checkCollision(playerX, playerZ);
 
 	char scoreText[20];
 	sprintf(scoreText, "Score: %d", score);  // Format score as string
 	renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
 	displayTimer();
-	
+
+	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
+	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
+	renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
+	renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
 
 	glFlush();
 }
@@ -766,21 +961,31 @@ void Keyboard(unsigned char key, int x, int y) {
 		playerAngle = -90.0f;  // Face right
 		newPlayerX += stepSize;  // Move right in the X direction
 		break;
-	
-		
+	case 'p':
+		followPlayer = !followPlayer; // Toggle the followPlayer flag
+		break;
+	case 'l':
+		followPlayer2 = !followPlayer2; // Toggle the followPlayer flag
+		break;
 
 	case GLUT_KEY_ESCAPE:
 		exit(EXIT_SUCCESS);
 	}
-
-	if (newPlayerX >= courtMinX && newPlayerX <= courtMaxX && newPlayerZ >= courtMinZ && newPlayerZ <= courtMaxZ) {
+	if ((newPlayerX >= -5.6f && newPlayerX <= 5.6f && newPlayerZ >= -13.3f && newPlayerZ <= 13.3f) || // Main room
+		(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
+		(newPlayerX >= 9.2f && newPlayerX <= 20.8f && newPlayerZ >= -10.2f && newPlayerZ <= 10.2f) || // Room 1
+		(newPlayerX >= -1.3f && newPlayerX <= 1.3f && newPlayerZ >= -19.7f && newPlayerZ <= -13.2f) || // Corridor 2
+		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) { // Room 2
 		// If the new position is valid, update the player's position
 		playerX = newPlayerX;
 		playerZ = newPlayerZ;
 		//PlayCollisionSound(".../../../Downloads/Bruh (Sound Effect) 1 second video!.wav");
-	}
+		updateCameraPosition();
+		updateCameraPosition2();
 
-	// Update leg movement for walking effect
+	}
+	printPlayerPosition();
+
 	if (legMovingForward) {
 		legAngle += 5.0f;
 		if (legAngle >= 20.0f) legMovingForward = false;
@@ -791,6 +996,10 @@ void Keyboard(unsigned char key, int x, int y) {
 	}
 
 	glutPostRedisplay();
+}
+
+void printPlayerPosition() {
+	std::cout << "Player Position - X: " << playerX << ", Z: " << playerZ << std::endl;
 }
 
 void Special(int key, int x, int y) {
@@ -814,8 +1023,10 @@ void Special(int key, int x, int y) {
 	glutPostRedisplay();
 }
 
+
+
 void Timer(int value) {
-            // Update ball position
+	// Update ball position
 	glutPostRedisplay();      // Request a redraw
 	glutTimerFunc(16, Timer, 0);  // Call Timer again after 16 ms (approx. 60 FPS)
 }
@@ -858,4 +1069,3 @@ int main(int argc, char** argv) {
 	glutMainLoop();
 	return 0;
 }
-
