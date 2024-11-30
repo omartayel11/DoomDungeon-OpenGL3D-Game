@@ -265,6 +265,45 @@ Trap trap12(2.4f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
 Trap trap13(4.4f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
 Trap trap14(5.6f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
 
+Trap trap15(6.2f, 1.0f, -0.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap16(9.3f, 1.0f, 4.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap17(11.4f, 1.0f, 4.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap18(13.5f, 1.0f, 4.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap19(15.6f, 1.0f, 4.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap20(17.7f, 1.0f, 4.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap21(19.8f, 1.0f, 4.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap22(14.8f, 1.0f, -2.5f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap23(14.8f, 1.0f, -4.6f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap24(14.8f, 1.0f, -6.7f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap25(14.8f, 1.0f, -8.8f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap26(14.8f, 1.0f, -10.1f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap27(14.8f, 1.0f, -2.5f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap28(16.9f, 1.0f, -2.5f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap29(19.0f, 1.0f, -2.5f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap30(20.7f, 1.0f, -2.5f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap31(-0.8f, 1.0f, -15.7f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap32(-5.7f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap33(-3.6f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap34(-1.5f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap35(0.6f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap36(2.7f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap37(4.8f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap38(5.7f, 1.0f, -24.9f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap39(-5.7f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap40(-3.6f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap41(-1.5f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap42(0.6f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap43(2.7f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap44(4.8f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap45(5.7f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+
 float playerX = -3.0f;  // Player's initial X position
 float playerZ = 10.0f;  // Player's initial Z position
 float playerAngle = 0.0f;  // Player's facing direction in degrees
@@ -678,30 +717,6 @@ void setupCamera() {
 	camera.look();
 }
 
-void checkGameOver() {
-	if (gameLost) {
-		if (ballHit && ballHit2) {
-
-			currentGameState = GAME_WON;
-			glutPostRedisplay();  // Request a redraw to show the new scene
-		}
-		else {
-
-			currentGameState = GAME_LOST;
-			glutPostRedisplay();  // Request a redraw to show the new scene
-
-		}
-
-	}
-
-}
-
-/*void checkGameWin() {
-	if (ballHit && ballHit2) {
-		currentGameState = GAME_WON;
-		glutPostRedisplay();  // Request a redraw to show the new scene
-	}
-}*/
 
 GLfloat wallColor[3] = { 1.0f, 0.0f, 0.0f };  // Initial wall color (red)
 void updateWallColor(int value) {
@@ -859,12 +874,150 @@ void renderText(const std::string& text, float x, float y, void* font = GLUT_BIT
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void drawCoinCollectibles() {
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	coin1.draw(time);
+	coin2.draw(time);
+	coin3.draw(time);
+	coin4.draw(time);
+	coin5.draw(time);
+	coin6.draw(time);
+	coin7.draw(time);
+	coin8.draw(time);
+	coin9.draw(time);
+	coin10.draw(time);
+	coin11.draw(time);
+	coin12.draw(time);
+	coin13.draw(time);
+	coin14.draw(time);
+	coin15.draw(time);
+	coin16.draw(time);
+	coin17.draw(time);
+}
+
+void checkCoinCollision() {
+	coin1.checkCollision(playerX, playerZ);
+	coin2.checkCollision(playerX, playerZ);
+	coin3.checkCollision(playerX, playerZ);
+	coin4.checkCollision(playerX, playerZ);
+	coin5.checkCollision(playerX, playerZ);
+	coin6.checkCollision(playerX, playerZ);
+	coin7.checkCollision(playerX, playerZ);
+	coin8.checkCollision(playerX, playerZ);
+	coin9.checkCollision(playerX, playerZ);
+	coin10.checkCollision(playerX, playerZ);
+	coin11.checkCollision(playerX, playerZ);
+	coin12.checkCollision(playerX, playerZ);
+	coin13.checkCollision(playerX, playerZ);
+	coin14.checkCollision(playerX, playerZ);
+	coin15.checkCollision(playerX, playerZ);
+	coin16.checkCollision(playerX, playerZ);
+	coin17.checkCollision(playerX, playerZ);
+}
+
+void drawTraps() {
+	float timeTrap = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	trap1.draw(timeTrap);
+	trap2.draw(timeTrap);
+	trap3.draw(timeTrap);
+	trap4.draw(timeTrap);
+	trap5.draw(timeTrap);
+	trap6.draw(timeTrap);
+	trap7.draw(timeTrap);
+	trap8.draw(timeTrap);
+	trap9.draw(timeTrap);
+	trap10.draw(timeTrap);
+	trap11.draw(timeTrap);
+	trap12.draw(timeTrap);
+	trap13.draw(timeTrap);
+	trap14.draw(timeTrap);
+	trap15.draw(timeTrap);
+	trap16.draw(timeTrap);
+	trap17.draw(timeTrap);
+	trap18.draw(timeTrap);
+	trap19.draw(timeTrap);
+	trap20.draw(timeTrap);
+	trap21.draw(timeTrap);
+	trap22.draw(timeTrap);
+	trap23.draw(timeTrap);
+	trap24.draw(timeTrap);
+	trap25.draw(timeTrap);
+	trap26.draw(timeTrap);
+	trap27.draw(timeTrap);
+	trap28.draw(timeTrap);
+	trap29.draw(timeTrap);
+	trap30.draw(timeTrap);
+	trap31.draw(timeTrap);
+	trap32.draw(timeTrap);
+	trap33.draw(timeTrap);
+	trap34.draw(timeTrap);
+	trap35.draw(timeTrap);
+	trap36.draw(timeTrap);
+	trap37.draw(timeTrap);
+	trap38.draw(timeTrap);
+	trap39.draw(timeTrap);
+	trap40.draw(timeTrap);
+	trap41.draw(timeTrap);
+	trap42.draw(timeTrap);
+	trap43.draw(timeTrap);
+	trap44.draw(timeTrap);
+	trap45.draw(timeTrap);
+}
+
+void checkTrapsCollision() {
+	trap1.checkCollision(playerX, playerZ);
+	trap2.checkCollision(playerX, playerZ);
+	trap3.checkCollision(playerX, playerZ);
+	trap4.checkCollision(playerX, playerZ);
+	trap5.checkCollision(playerX, playerZ);
+	trap6.checkCollision(playerX, playerZ);
+	trap7.checkCollision(playerX, playerZ);
+	trap8.checkCollision(playerX, playerZ);
+	trap9.checkCollision(playerX, playerZ);
+	trap10.checkCollision(playerX, playerZ);
+	trap11.checkCollision(playerX, playerZ);
+	trap12.checkCollision(playerX, playerZ);
+	trap13.checkCollision(playerX, playerZ);
+	trap14.checkCollision(playerX, playerZ);
+	trap15.checkCollision(playerX, playerZ);
+	trap16.checkCollision(playerX, playerZ);
+	trap17.checkCollision(playerX, playerZ);
+	trap18.checkCollision(playerX, playerZ);
+	trap19.checkCollision(playerX, playerZ);
+	trap20.checkCollision(playerX, playerZ);
+	trap21.checkCollision(playerX, playerZ);
+	trap22.checkCollision(playerX, playerZ);
+	trap23.checkCollision(playerX, playerZ);
+	trap24.checkCollision(playerX, playerZ);
+	trap25.checkCollision(playerX, playerZ);
+	trap26.checkCollision(playerX, playerZ);
+	trap27.checkCollision(playerX, playerZ);
+	trap28.checkCollision(playerX, playerZ);
+	trap29.checkCollision(playerX, playerZ);
+	trap30.checkCollision(playerX, playerZ);
+	trap31.checkCollision(playerX, playerZ);
+	trap32.checkCollision(playerX, playerZ);
+	trap33.checkCollision(playerX, playerZ);
+	trap34.checkCollision(playerX, playerZ);
+	trap35.checkCollision(playerX, playerZ);
+	trap36.checkCollision(playerX, playerZ);
+	trap37.checkCollision(playerX, playerZ);
+	trap38.checkCollision(playerX, playerZ);
+	trap39.checkCollision(playerX, playerZ);
+	trap40.checkCollision(playerX, playerZ);
+	trap41.checkCollision(playerX, playerZ);
+	trap42.checkCollision(playerX, playerZ);
+	trap43.checkCollision(playerX, playerZ);
+	trap44.checkCollision(playerX, playerZ);
+	trap45.checkCollision(playerX, playerZ);
+
+}
 
 void Display() {
 	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
-	float timeTrap = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	
+	
 
 	switch (currentGameState) {
 	case PLAYING:
@@ -881,70 +1034,10 @@ void Display() {
 		drawPlayer();
 		drawEnv1();
 
-		coin1.draw(time);
-		coin2.draw(time);
-		coin3.draw(time);
-		coin4.draw(time);
-		coin5.draw(time);
-		coin6.draw(time);
-		coin7.draw(time);
-		coin8.draw(time);
-		coin9.draw(time);
-		coin10.draw(time);
-		coin11.draw(time);
-		coin12.draw(time);
-		coin13.draw(time);
-		coin14.draw(time);
-		coin15.draw(time);
-		coin16.draw(time);
-		coin17.draw(time);
-		coin1.checkCollision(playerX, playerZ);
-		coin2.checkCollision(playerX, playerZ);
-		coin3.checkCollision(playerX, playerZ);
-		coin4.checkCollision(playerX, playerZ);
-		coin5.checkCollision(playerX, playerZ);
-		coin6.checkCollision(playerX, playerZ);
-		coin7.checkCollision(playerX, playerZ);
-		coin8.checkCollision(playerX, playerZ);
-		coin9.checkCollision(playerX, playerZ);
-		coin10.checkCollision(playerX, playerZ);
-		coin11.checkCollision(playerX, playerZ);
-		coin12.checkCollision(playerX, playerZ);
-		coin13.checkCollision(playerX, playerZ);
-		coin14.checkCollision(playerX, playerZ);
-		coin15.checkCollision(playerX, playerZ);
-		coin16.checkCollision(playerX, playerZ);
-		coin17.checkCollision(playerX, playerZ);
-
-		trap1.draw(timeTrap);
-		trap2.draw(timeTrap);
-		trap3.draw(timeTrap);
-		trap4.draw(timeTrap);
-		trap5.draw(timeTrap);
-		trap6.draw(timeTrap);
-		trap7.draw(timeTrap);
-		trap8.draw(timeTrap);
-		trap9.draw(timeTrap);
-		trap10.draw(timeTrap);
-		trap11.draw(timeTrap);
-		trap12.draw(timeTrap);
-		trap13.draw(timeTrap);
-		trap14.draw(timeTrap);
-		trap1.checkCollision(playerX, playerZ);
-		trap2.checkCollision(playerX, playerZ);
-		trap3.checkCollision(playerX, playerZ);
-		trap4.checkCollision(playerX, playerZ);
-		trap5.checkCollision(playerX, playerZ);
-		trap6.checkCollision(playerX, playerZ);
-		trap7.checkCollision(playerX, playerZ);
-		trap8.checkCollision(playerX, playerZ);
-		trap9.checkCollision(playerX, playerZ);
-		trap10.checkCollision(playerX, playerZ);
-		trap11.checkCollision(playerX, playerZ);
-		trap12.checkCollision(playerX, playerZ);
-		trap13.checkCollision(playerX, playerZ);
-		trap14.checkCollision(playerX, playerZ);
-		
+		drawCoinCollectibles();
+		checkCoinCollision();
+		drawTraps();
+		checkTrapsCollision();
 
 		char scoreText[20];
 		sprintf(scoreText, "Score: %d", score);  // Format score as string
