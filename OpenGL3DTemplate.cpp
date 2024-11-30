@@ -57,6 +57,8 @@ bool gameWin = false;
 bool gameLost = false;
 int timer = 3000;
 
+int playerHealth = 100;
+
 
 enum GameState { PLAYING, GAME_WON, GAME_LOST };
 GameState currentGameState = PLAYING;
@@ -118,7 +120,6 @@ public:
 		);
 	}
 };
-
 Camera camera;
 
 
@@ -170,9 +171,23 @@ public:
 		}
 	}
 };
-Coin coin(2.0f, 1.0f, 3.0f, 0.5f);
-
-int playerHealth = 100;
+Coin coin1(3.8f, 1.0f, 9.2f, 0.3f);
+Coin coin2(-1.2f, 1.0f, -0.1f, 0.3f);
+Coin coin3(-1.7f, 1.0f, -7.7f, 0.3f);
+Coin coin4(4.7f, 1.0f, -6.3f, 0.3f);
+Coin coin5(7.6f, 1.0f, -1.1f, 0.3f);
+Coin coin6(10.3f, 1.0f, -4.4f, 0.3f);
+Coin coin7(10.3f, 1.0f, -9.0f, 0.3f);
+Coin coin8(18.6f, 1.0f, -6.8f, 0.3f);
+Coin coin9(16.5f, 1.0f, 0.9f, 0.3f);
+Coin coin10(15.3f, 1.0f, 9.1f, 0.3f);
+Coin coin11(19.7f, 1.0f, 9.1f, 0.3f);
+Coin coin12(3.7f, 1.0f, -12.3f, 0.3f);
+Coin coin13(-1.0f, 1.0f, -17.8f, 0.3f);
+Coin coin14(-3.8f, 1.0f, -21.5f, 0.3f);
+Coin coin15(5.1f, 1.0f, -21.5f, 0.3f);
+Coin coin16(3.9f, 1.0f, -31.4f, 0.3f);
+Coin coin17(-4.6f, 1.0f, 31.6f, 0.3f);
 
 class Trap {
 public:
@@ -227,13 +242,28 @@ public:
 				std::cout << "Player hit by trap! Health: " << playerHealth << std::endl;
 				if (playerHealth <= 0) {
 					std::cout << "Player is dead!" << std::endl;
+					gameLost = true;
 					// Handle player death (e.g., end game, respawn, etc.)
 				}
 			}
 		}
 	}
 };
-Trap trap(0.0f, 1.0f, 0.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap1(-5.6f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap2(-3.6f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap3(-1.6f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap4(0.4f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap5(2.4f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap6(4.4f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap7(5.6f, 1.0f, 3.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+
+Trap trap8(-5.6f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap9(-3.6f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap10(-1.6f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap11(0.4f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap12(2.4f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap13(4.4f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
+Trap trap14(5.6f, 1.0f, -10.0f, 2.0f, 2.0f, 0.6f, 0.01f);
 
 float playerX = -3.0f;  // Player's initial X position
 float playerZ = 10.0f;  // Player's initial Z position
@@ -408,39 +438,6 @@ void timerCallback(int value) {
 }
 
 
-bool checkCollision(float playerX, float playerZ, float ballX, float ballZ, float collisionRadius) {
-	// Calculate the distance between the player and the ball
-	float distance = sqrt(pow(playerX - ballX, 2) + pow(playerZ - ballZ, 2));
-	// If the distance between the player and the ball is less than the collision radius, consider it a collision 
-	if (distance < collisionRadius) {
-		return true;
-	}
-
-	return false;
-}
-
-void update() {
-	if (isForehand && checkCollision(playerX, playerZ, ballPosition.x, ballPosition.z, ballRadius)) {  // Adjust the racket size for collision detection
-		//PlayCollisionSound("../../../Downloads/Retro Game Coin Sound Effect.wav");
-		if (!ballHit) {  // Only increment score once
-			score += 100;
-			ballHit = true;  // Set flag to prevent multiple score increments
-		}
-	}
-	//printf("Score: %d\n", score);
-}
-
-void update2() {
-	if (isForehand && checkCollision(playerX, playerZ, ballPosition2.x, ballPosition2.z, ballRadius)) {  // Adjust the racket size for collision detection
-		//PlayCollisionSound("../../../Downloads/Retro Game Coin Sound Effect.wav");
-		if (!ballHit2) {  // Only increment score once
-			score += 100;
-			ballHit2 = true;  // Set flag to prevent multiple score increments
-		}
-	}
-	//printf("Score: %d\n", score);
-}
-
 void drawWall(double width, double height, double thickness) {
 	glPushMatrix();
 	glScaled(width, height, thickness);
@@ -452,7 +449,6 @@ void drawWall(double width, double height, double thickness) {
 float toRadians(float degrees) {
 	return degrees * (3.14159f / 180.0f);
 }
-
 
 void drawCourt() {
 
@@ -657,26 +653,6 @@ void drawEnv1() {
 
 }
 
-void drawCoin(float x, float y, float z, float time) {
-	// Calculate the vertical offset using a sine wave for smooth up and down movement
-	float verticalOffset = 0.5f * sin(time);
-
-	glPushMatrix();
-	glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
-
-	// Draw the coin (a simple cylinder)
-	glColor3f(1.0f, 0.84f, 0.0f); // Gold color
-	GLUquadric* quad = gluNewQuadric();
-	gluDisk(quad, 0.0f, 0.5f, 20, 1); // Top face
-	glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the side
-	gluCylinder(quad, 0.3f, 0.3f, 0.1f, 20, 1); // Side face
-	glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the bottom face
-	gluDisk(quad, 0.0f, 0.5f, 20, 1); // Bottom face
-	gluDeleteQuadric(quad);
-
-	glPopMatrix();
-}
-
 void setupLights() {
 	GLfloat ambient[] = { 0.7f, 0.7f, 0.7, 1.0f };
 	GLfloat diffuse[] = { 0.6f, 0.6f, 0.6, 1.0f };
@@ -757,6 +733,26 @@ void updateCameraPosition2() {
 		// Set the camera's position to the player's head position
 		camera.setView(playerX, 3.8f, playerZ+3, playerX - sin(DEG2RAD(playerAngle)), 1.8f, playerZ - cos(DEG2RAD(playerAngle)));
 	}
+}
+
+void resetCoins() {
+	coin1.collected = false;
+	coin2.collected = false;
+	coin3.collected = false;
+	coin4.collected = false;
+	coin5.collected = false;
+	coin6.collected = false;
+	coin7.collected = false;
+	coin8.collected = false;
+	coin9.collected = false;
+	coin10.collected = false;
+	coin11.collected = false;
+	coin12.collected = false;
+	coin13.collected = false;
+	coin14.collected = false;
+	coin15.collected = false;
+	coin16.collected = false;
+	coin17.collected = false;
 }
 
 /*void Display() {
@@ -865,42 +861,131 @@ void renderText(const std::string& text, float x, float y, void* font = GLUT_BIT
 
 
 void Display() {
-
-	setupCamera();
-	setupLights();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Draw tennis court floor and lines
-	drawCourt();
-	drawRoom();
-	drawRoom2();
-	drawCoridor1();
-	drawCoridor2();
-	drawPlayer();
-	
-	drawEnv1();
-
-	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-
-	coin.draw(time);
-	coin.checkCollision(playerX, playerZ);
-
-	float timeTrap = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-
-	trap.draw(timeTrap);
-	trap.checkCollision(playerX, playerZ);
-
-	char scoreText[20];
-	sprintf(scoreText, "Score: %d", score);  // Format score as string
-	renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
-	displayTimer();
-
 	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
-	renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
-	renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
+	float timeTrap = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+	switch (currentGameState) {
+	case PLAYING:
+		setupCamera();
+		setupLights();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Draw tennis court floor and lines
+		drawCourt();
+		drawRoom();
+		drawRoom2();
+		drawCoridor1();
+		drawCoridor2();
+		drawPlayer();
+		drawEnv1();
+
+		coin1.draw(time);
+		coin2.draw(time);
+		coin3.draw(time);
+		coin4.draw(time);
+		coin5.draw(time);
+		coin6.draw(time);
+		coin7.draw(time);
+		coin8.draw(time);
+		coin9.draw(time);
+		coin10.draw(time);
+		coin11.draw(time);
+		coin12.draw(time);
+		coin13.draw(time);
+		coin14.draw(time);
+		coin15.draw(time);
+		coin16.draw(time);
+		coin17.draw(time);
+		coin1.checkCollision(playerX, playerZ);
+		coin2.checkCollision(playerX, playerZ);
+		coin3.checkCollision(playerX, playerZ);
+		coin4.checkCollision(playerX, playerZ);
+		coin5.checkCollision(playerX, playerZ);
+		coin6.checkCollision(playerX, playerZ);
+		coin7.checkCollision(playerX, playerZ);
+		coin8.checkCollision(playerX, playerZ);
+		coin9.checkCollision(playerX, playerZ);
+		coin10.checkCollision(playerX, playerZ);
+		coin11.checkCollision(playerX, playerZ);
+		coin12.checkCollision(playerX, playerZ);
+		coin13.checkCollision(playerX, playerZ);
+		coin14.checkCollision(playerX, playerZ);
+		coin15.checkCollision(playerX, playerZ);
+		coin16.checkCollision(playerX, playerZ);
+		coin17.checkCollision(playerX, playerZ);
+
+		trap1.draw(timeTrap);
+		trap2.draw(timeTrap);
+		trap3.draw(timeTrap);
+		trap4.draw(timeTrap);
+		trap5.draw(timeTrap);
+		trap6.draw(timeTrap);
+		trap7.draw(timeTrap);
+		trap8.draw(timeTrap);
+		trap9.draw(timeTrap);
+		trap10.draw(timeTrap);
+		trap11.draw(timeTrap);
+		trap12.draw(timeTrap);
+		trap13.draw(timeTrap);
+		trap14.draw(timeTrap);
+		trap1.checkCollision(playerX, playerZ);
+		trap2.checkCollision(playerX, playerZ);
+		trap3.checkCollision(playerX, playerZ);
+		trap4.checkCollision(playerX, playerZ);
+		trap5.checkCollision(playerX, playerZ);
+		trap6.checkCollision(playerX, playerZ);
+		trap7.checkCollision(playerX, playerZ);
+		trap8.checkCollision(playerX, playerZ);
+		trap9.checkCollision(playerX, playerZ);
+		trap10.checkCollision(playerX, playerZ);
+		trap11.checkCollision(playerX, playerZ);
+		trap12.checkCollision(playerX, playerZ);
+		trap13.checkCollision(playerX, playerZ);
+		trap14.checkCollision(playerX, playerZ);
+		
+
+		char scoreText[20];
+		sprintf(scoreText, "Score: %d", score);  // Format score as string
+		renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
+		displayTimer();
+
+		
+		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
+		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
+		if (gameLost) {
+			currentGameState = GAME_LOST;
+		}
+		break;
+
+
+	case GAME_LOST:
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		renderText("Game Over", windowWidth / 2 - 50, windowHeight / 2);
+		renderText("Score: " + std::to_string(score), windowWidth / 2 - 50, windowHeight / 2 - 20);
+		renderText("Click to Restart", windowWidth / 2 - 50, windowHeight / 2 - 40);
+		break;
+	}
 
 	glFlush();
+}
+
+void mouseClick(int button, int state, int x, int y) {
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		if (currentGameState == GAME_LOST) {
+			currentGameState = PLAYING;
+			score = 0;
+			playerHealth = 100;
+			gameLost = false;
+			resetCoins();
+			playerX = -3.0f;
+			playerZ = 10.0f;
+		}
+	}
 }
 
 void Keyboard(unsigned char key, int x, int y) {
@@ -1050,9 +1135,10 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(Display);
 	glutKeyboardFunc(Keyboard);
 	glutSpecialFunc(Special);
+	glutMouseFunc(mouseClick);
 
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.529f, 0.808f, 0.922f, 1.0f); // Sky blue background
+	//glClearColor(0.529f, 0.808f, 0.922f, 1.0f); // Sky blue background
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
@@ -1063,8 +1149,6 @@ int main(int argc, char** argv) {
 	// Start the timer
 	glutTimerFunc(0, Timer, 0);
 	glutTimerFunc(1000, timerCallback, 0);
-	glutTimerFunc(2000, updateWallColor, 0);  // Start the wall color update timer
-
 
 	glutMainLoop();
 	return 0;
