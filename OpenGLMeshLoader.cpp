@@ -1,13 +1,15 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "TextureBuilder.h"
+#include "Model_3DS.h"
+#include "GLTexture.h"
 #include <glut.h>
 #include <windows.h>
 #include <mmsystem.h>
 #include <iostream>
 #include <cmath>
 #include <sstream>
-
 #include <vector>
 
 
@@ -63,6 +65,8 @@ int playerHealth = 100;
 enum GameState { PLAYING, GAME_WON, GAME_LOST, LEVEL2_START, LEVEL2_PLAYING };
 GameState currentGameState = PLAYING;
 
+Model_3DS model_printer;
+Model_3DS model_tree;
 
 class Camera {
 public:
@@ -141,18 +145,32 @@ public:
 		glPushMatrix();
 		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
 
-		// Draw the coin (a simple cylinder for now)
-		glColor3f(1.0f, 0.84f, 0.0f); // Gold color
-		GLUquadric* quad = gluNewQuadric();
-		gluDisk(quad, 0.0f, radius, 20, 1); // Top face
-		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the side
-		gluCylinder(quad, radius, radius, 0.1f, 20, 1); // Side face
-		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the bottom face
-		gluDisk(quad, 0.0f, radius, 20, 1); // Bottom face
-		gluDeleteQuadric(quad);
+		// Reset OpenGL state before drawing
+		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+		// Reset material properties (use white diffuse and ambient to avoid color influence)
+		GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+		GLfloat defaultShininess = 0.0f;
+
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+		// Draw the coin model
+		glScalef(10.1f, 10.1f, 10.1f); // Scale the model as needed
+		model_printer.Draw(); // Render the .3ds model
 
 		glPopMatrix();
+
+		// Reset OpenGL state if needed
+		glDisable(GL_TEXTURE_2D); // Disable 2D texturing if not needed elsewhere
 	}
+
+
 
 	void checkCollision(float playerX, float playerZ) {
 		if (collected) return; // Skip if the coin is already collected
@@ -362,7 +380,7 @@ public:
 	void draw() {
 		glPushMatrix();
 		glTranslatef(x, y, z);
-		glColor3f(0.6f, 1.3f, 0.1f); // Brown color for the crate
+		glColor3f(1.6f, 0.3f, 0.1f); 
 		glutSolidCube(width);
 		glPopMatrix();
 	}
@@ -391,7 +409,7 @@ public:
 	void draw() {
 		glPushMatrix();
 		glTranslatef(x, y, z);
-		glColor3f(0.5f, 1.25f, 0.0f); // Dark brown color for the barrel
+		glColor3f(0.5f, 0.25f, 1.0f); // Dark brown color for the barrel
 		GLUquadric* quad = gluNewQuadric();
 		gluCylinder(quad, radius, radius, height, 20, 1);
 		glPopMatrix();
@@ -1365,12 +1383,12 @@ void updateJump() {
 	glutPostRedisplay();
 }
 
-
-
-
 void Display() {
 	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 	switch (currentGameState) {
 	case PLAYING:
@@ -1394,6 +1412,18 @@ void Display() {
 		checkTrapsCollision();
 
 		updateJump();
+
+		/*glPushMatrix();
+		glTranslatef(1.1, 1, 10);
+		glScalef(10.1, 10.1, 10.1);
+		model_printer.Draw();
+		glPopMatrix();*/
+
+		/*glPushMatrix();
+		glTranslatef(2, 1, 10);
+		glScalef(0.7, 0.7, 0.7);
+		model_tree.Draw();
+		glPopMatrix();*/
 
 		checkKey();
 
@@ -1632,6 +1662,13 @@ void Special(int key, int x, int y) {
 	glutPostRedisplay();
 }
 
+void LoadAssets()
+{
+	
+	model_printer.Load("Models/house/uploads_files_233898_50ct.3ds");
+	model_tree.Load("Models/tree/Tree1.3ds");
+
+}
 
 
 void Timer(int value) {
@@ -1670,6 +1707,15 @@ int main(int argc, char** argv) {
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
 
+
+	LoadAssets();
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_COLOR_MATERIAL);
+
+	glShadeModel(GL_SMOOTH);
 	// Start the timer
 	glutTimerFunc(0, Timer, 0);
 	glutTimerFunc(1000, timerCallback, 0);
