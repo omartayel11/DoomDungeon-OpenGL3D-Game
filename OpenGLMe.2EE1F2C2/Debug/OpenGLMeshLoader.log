@@ -1,0 +1,16 @@
+﻿  GLTexture.cpp
+  Model_3DS.cpp
+C:\Users\Omart\Desktop\GUC\DoomDungeon\GLTexture.cpp(61,16): warning C4996: '_strlwr': This function or variable may be unsafe. Consider using _strlwr_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\GLTexture.cpp(65,17): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\GLTexture.cpp(77,16): warning C4996: '_strlwr': This function or variable may be unsafe. Consider using _strlwr_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\GLTexture.cpp(146,15): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Users\Omart\Desktop\GUC\DoomDungeon\Model_3DS.cpp(78) : You need to uncomment this if you are using MFC
+C:\Users\Omart\Desktop\GUC\DoomDungeon\Model_3DS.cpp(182,10): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\Model_3DS.cpp(212,11): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\Model_3DS.cpp(764,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  OpenGLMeshLoader.cpp
+C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(685,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1401,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  Generating Code...
+GLTexture.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
+  OpenGLMeshLoader.vcxproj -> C:\Users\Omart\Desktop\GUC\DoomDungeon\Debug\OpenGLMeshLoader19.exe
