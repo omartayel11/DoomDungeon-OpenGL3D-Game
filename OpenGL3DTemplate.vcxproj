@@ -82,7 +82,13 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\GLTexture.cpp" />
+    <ClCompile Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\Model_3DS.cpp" />
     <ClCompile Include="OpenGL3DTemplate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\GLTexture.h" />
+    <ClInclude Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\Model_3DS.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

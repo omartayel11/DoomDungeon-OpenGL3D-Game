@@ -18,5 +18,19 @@
     <ClCompile Include="OpenGL3DTemplate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\GLTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\Model_3DS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\Model_3DS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Downloads\GUC_312_64_46305_2024-10-31T17_10_38\GLTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -19,6 +19,7 @@
 void PlaySoundEffect(const char* filename);
 void PlayCollisionSound(const char* filename);
 void printPlayerPosition();
+void updateJump();
 
 
 class Vector3f {
@@ -59,8 +60,7 @@ int timer = 3000;
 
 int playerHealth = 100;
 
-
-enum GameState { PLAYING, GAME_WON, GAME_LOST };
+enum GameState { PLAYING, GAME_WON, GAME_LOST, LEVEL2_START, LEVEL2_PLAYING };
 GameState currentGameState = PLAYING;
 
 
@@ -303,10 +303,232 @@ Trap trap43(2.7f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
 Trap trap44(4.8f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
 Trap trap45(5.7f, 1.0f, -29.2f, 2.0f, 2.0f, 0.6f, 0.01f);
 
+class AncientKey {
+public:
+	float x, y, z;
+	float radius;
+	bool collected;
+
+	AncientKey(float _x, float _y, float _z, float _radius)
+		: x(_x), y(_y), z(_z), radius(_radius), collected(false) {}
+
+	void draw(float time) {
+		if (collected) return; // Skip drawing if the key is collected
+
+		// Calculate the vertical offset using a sine wave for smooth up and down movement
+		float verticalOffset = 0.2f * sin(time);
+
+		glPushMatrix();
+		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
+
+		// Draw the key (a simple cylinder for now)
+		glColor3f(0.8f, 1.5f, 0.2f); // Bronze color
+		GLUquadric* quad = gluNewQuadric();
+		gluDisk(quad, 0.0f, radius, 20, 1); // Top face
+		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the side
+		gluCylinder(quad, radius, radius, 0.1f, 20, 1); // Side face
+		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the bottom face
+		gluDisk(quad, 0.0f, radius, 20, 1); // Bottom face
+		gluDeleteQuadric(quad);
+
+		glPopMatrix();
+	}
+
+	void checkCollision(float playerX, float playerZ) {
+		if (collected) return; // Skip if the key is already collected
+
+		// Calculate the distance between the player and the key
+		float distance = sqrt(pow(playerX - x, 2) + pow(playerZ - z, 2));
+
+		// Check if the distance is less than the sum of the radii (collision detection)
+		if (distance < radius + 0.5f) { // Assuming player radius is 0.5f
+			collected = true; // Mark the key as collected
+			std::cout << "Ancient Key collected!" << std::endl;
+
+		}
+	}
+};
+
+AncientKey key1(-2.6f, 1.0f, -36.1f, 0.3f);
+
+class Crate {
+public:
+	float x, y, z;
+	float width, height, depth;
+
+	Crate(float _x, float _y, float _z, float _width, float _height, float _depth)
+		: x(_x), y(_y), z(_z), width(_width), height(_height), depth(_depth) {}
+
+	void draw() {
+		glPushMatrix();
+		glTranslatef(x, y, z);
+		glColor3f(0.6f, 1.3f, 0.1f); // Brown color for the crate
+		glutSolidCube(width);
+		glPopMatrix();
+	}
+
+	bool checkCollision(float playerX, float playerZ, float playerRadius) const {
+		float halfWidth = width / 2.0f;
+		float halfDepth = depth / 2.0f;
+
+		// Check if the player is within the bounds of the crate
+		if (playerX + playerRadius > x - halfWidth && playerX - playerRadius < x + halfWidth &&
+			playerZ + playerRadius > z - halfDepth && playerZ - playerRadius < z + halfDepth) {
+			return true;
+		}
+		return false;
+	}
+};
+
+class Barrel {
+public:
+	float x, y, z;
+	float radius, height;
+
+	Barrel(float _x, float _y, float _z, float _radius, float _height)
+		: x(_x), y(_y), z(_z), radius(_radius), height(_height) {}
+
+	void draw() {
+		glPushMatrix();
+		glTranslatef(x, y, z);
+		glColor3f(0.5f, 1.25f, 0.0f); // Dark brown color for the barrel
+		GLUquadric* quad = gluNewQuadric();
+		gluCylinder(quad, radius, radius, height, 20, 1);
+		glPopMatrix();
+	}
+
+	bool checkCollision(float playerX, float playerZ, float playerRadius) const {
+		// Calculate the distance between the player and the barrel
+		float distance = sqrt(pow(playerX - x, 2) + pow(playerZ - z, 2));
+
+		// Check if the distance is less than the sum of the radii (collision detection)
+		if (distance < radius + playerRadius) {
+			return true;
+		}
+		return false;
+	}
+};
+
+// Example instantiation and usage
+Crate crate1(-3.0f, 1.0f, 6.5f, 1.0f, 1.0f, 1.0f);
+Barrel barrel1(1.5f, 0.5f, 6.5f, 0.5f, 1.0f);
+
+
+// x = from -5.2 to -2.9, z = 9
+Crate crate2(-5.2f, 1.0f, 9.0f, 1.0f, 1.0f, 1.0f);
+Crate crate3(-4.2f, 1.0f, 9.0f, 1.0f, 1.0f, 1.0f);
+Crate crate4(-3.2f, 1.0f, 9.0f, 1.0f, 1.0f, 1.0f);
+
+// x = -2.9, z = from 8.5 to 4.5
+Barrel barrel2(-2.9f, 0.5f, 8.5f, 0.5f, 1.0f);
+Barrel barrel3(-2.9f, 0.5f, 7.5f, 0.5f, 1.0f);
+Barrel barrel4(-2.9f, 0.5f, 6.5f, 0.5f, 1.0f);
+Barrel barrel5(-2.9f, 0.5f, 5.5f, 0.5f, 1.0f);
+Barrel barrel6(-2.9f, 0.5f, 4.5f, 0.5f, 1.0f);
+
+// x = 4, z = from 6.8 to 4.4
+Crate crate5(4.0f, 1.0f, 6.8f, 1.0f, 1.0f, 1.0f);
+Crate crate6(4.0f, 1.0f, 5.8f, 1.0f, 1.0f, 1.0f);
+Crate crate7(4.0f, 1.0f, 4.8f, 1.0f, 1.0f, 1.0f);
+
+// x = from 5.3 to -0.4, z = 12.6
+Barrel barrel7(5.3f, 0.5f, 12.6f, 0.5f, 1.0f);
+Barrel barrel8(4.3f, 0.5f, 12.6f, 0.5f, 1.0f);
+Barrel barrel9(3.3f, 0.5f, 12.6f, 0.5f, 1.0f);
+Barrel barrel10(2.3f, 0.5f, 12.6f, 0.5f, 1.0f);
+Barrel barrel11(1.3f, 0.5f, 12.6f, 0.5f, 1.0f);
+Barrel barrel12(0.3f, 0.5f, 12.6f, 0.5f, 1.0f);
+Barrel barrel13(-0.4f, 0.5f, 12.6f, 0.5f, 1.0f);
+
+// x = from -0.4 to -5.4, z = -1.8
+Crate crate8(-0.4f, 1.0f, -1.8f, 1.0f, 1.0f, 1.0f);
+Crate crate9(-1.4f, 1.0f, -1.8f, 1.0f, 1.0f, 1.0f);
+Crate crate10(-2.4f, 1.0f, -1.8f, 1.0f, 1.0f, 1.0f);
+Crate crate11(-3.4f, 1.0f, -1.8f, 1.0f, 1.0f, 1.0f);
+Crate crate12(-4.4f, 1.0f, -1.8f, 1.0f, 1.0f, 1.0f);
+Crate crate13(-5.4f, 1.0f, -1.8f, 1.0f, 1.0f, 1.0f);
+
+// x = from -0.6 to -5.4, z = -6.3
+Barrel barrel14(-0.6f, 0.5f, -6.3f, 0.5f, 1.0f);
+Barrel barrel15(-1.6f, 0.5f, -6.3f, 0.5f, 1.0f);
+Barrel barrel16(-2.6f, 0.5f, -6.3f, 0.5f, 1.0f);
+Barrel barrel17(-3.6f, 0.5f, -6.3f, 0.5f, 1.0f);
+Barrel barrel18(-4.6f, 0.5f, -6.3f, 0.5f, 1.0f);
+Barrel barrel19(-5.4f, 0.5f, -6.3f, 0.5f, 1.0f);
+
+// x = from 2.8 to 5.5, z = -4.6
+Crate crate14(2.8f, 1.0f, -4.6f, 1.0f, 1.0f, 1.0f);
+Crate crate15(3.8f, 1.0f, -4.6f, 1.0f, 1.0f, 1.0f);
+Crate crate16(4.8f, 1.0f, -4.6f, 1.0f, 1.0f, 1.0f);
+Crate crate17(5.5f, 1.0f, -4.6f, 1.0f, 1.0f, 1.0f);
+
+// x = 9.3, z = 1.1
+Crate crate18(9.3f, 1.0f, 1.1f, 1.0f, 1.0f, 1.0f);
+
+// x = from 9.7 to 11.9, z = -6.8
+Barrel barrel20(9.7f, 0.5f, -6.8f, 0.5f, 1.0f);
+Barrel barrel21(10.7f, 0.5f, -6.8f, 0.5f, 1.0f);
+Barrel barrel22(11.9f, 0.5f, -6.8f, 0.5f, 1.0f);
+
+// x = 20, z = -9.5
+Crate crate19(20.0f, 1.0f, -9.5f, 1.0f, 1.0f, 1.0f);
+
+// x = 16.5, z = from -7.1 to -9.8
+Barrel barrel23(16.5f, 0.5f, -7.1f, 0.5f, 1.0f);
+Barrel barrel24(16.5f, 0.5f, -8.1f, 0.5f, 1.0f);
+Barrel barrel25(16.5f, 0.5f, -9.1f, 0.5f, 1.0f);
+Barrel barrel26(16.5f, 0.5f, -9.8f, 0.5f, 1.0f);
+
+// x = 13.4, z = 2.1
+Crate crate20(13.4f, 1.0f, 2.1f, 1.0f, 1.0f, 1.0f);
+
+// x = 19.6, z = from 1.9 to 0.4
+Barrel barrel27(19.6f, 0.5f, 1.9f, 0.5f, 1.0f);
+Barrel barrel28(19.6f, 0.5f, 0.9f, 0.5f, 1.0f);
+Barrel barrel29(19.6f, 0.5f, 0.4f, 0.5f, 1.0f);
+
+// x = 17.3, z = from 7.8 to 9.6
+Crate crate21(17.3f, 1.0f, 7.8f, 1.0f, 1.0f, 1.0f);
+Crate crate22(17.3f, 1.0f, 8.8f, 1.0f, 1.0f, 1.0f);
+Crate crate23(17.3f, 1.0f, 9.6f, 1.0f, 1.0f, 1.0f);
+
+// x = 11.1, z = from 7.3 to 9.7
+Barrel barrel30(11.1f, 0.5f, 7.3f, 0.5f, 1.0f);
+Barrel barrel31(11.1f, 0.5f, 8.3f, 0.5f, 1.0f);
+Barrel barrel32(11.1f, 0.5f, 9.3f, 0.5f, 1.0f);
+Barrel barrel33(11.1f, 0.5f, 9.7f, 0.5f, 1.0f);
+
+// x = 0.9, z = -13.2
+Crate crate24(0.9f, 1.0f, -13.2f, 1.0f, 1.0f, 1.0f);
+
+// x = 2.6, z = from -20.2 to -22.5
+Barrel barrel34(2.6f, 0.5f, -20.2f, 0.5f, 1.0f);
+Barrel barrel35(2.6f, 0.5f, -21.2f, 0.5f, 1.0f);
+Barrel barrel36(2.6f, 0.5f, -22.2f, 0.5f, 1.0f);
+Barrel barrel37(2.6f, 0.5f, -22.5f, 0.5f, 1.0f);
+
+Crate crate25(-3.0f, 1.0f, 6.5f, 1.0f, 1.0f, 1.0f);
+Barrel barrel38(1.5f, 0.5f, 6.5f, 0.5f, 1.0f);
+
+Crate crate26(-3.3f, 1.0f, -23.2f, 1.0f, 1.0f, 1.0f);
+Barrel barrel39(-4.0f, 0.5f, -23.2f, 0.5f, 1.0f);
+Crate crate27(-5.4f, 1.0f, -23.2f, 1.0f, 1.0f, 1.0f);
+
+Crate crate28(-4.9f, 1.0f, -32.6f, 1.0f, 1.0f, 1.0f);
+Barrel barrel40(-3.5f, 0.5f, -32.6f, 0.5f, 1.0f);
+Crate crate29(-2.0f, 1.0f, -32.6f, 1.0f, 1.0f, 1.0f);
+
+Barrel barrel41(5.1f, 0.5f, -39.1f, 0.5f, 1.0f);
+
 
 float playerX = -3.0f;  // Player's initial X position
 float playerZ = 10.0f;  // Player's initial Z position
+float playerY = -0.3f;  // Player's initial Y position (for jumping)
 float playerAngle = 0.0f;  // Player's facing direction in degrees
+bool isJumping = false;
+float jumpStartTime = 0.0f;
+float jumpDuration = 1.0f; // Duration of the jump in seconds
+float jumpHeight = 2.0f;
 float legAngle = 0.0f;  // Angle for leg movement (for walking effect)
 bool legMovingForward = true;  // Direction of leg movement (for walking)
 
@@ -315,7 +537,7 @@ void drawPlayer() {
 	//glDisable(GL_LIGHTING);
 
 	glPushMatrix();
-	glTranslatef(playerX, -0.3f, playerZ); // Player's position
+	glTranslatef(playerX, playerY, playerZ); // Player's position
 	glRotatef(playerAngle, 0.0f, 1.0f, 0.0f); // Rotate to face movement direction
 
 	// Head
@@ -1013,19 +1235,149 @@ void checkTrapsCollision() {
 
 }
 
+void checkKey() {
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	if (score >= 1000) {
+		key1.draw(time);
+		key1.checkCollision(playerX, playerZ);
+	}
+	if (key1.collected) {
+		//currentGameState = GAME_WON;
+	}
+}
+
+void drawCrates() {
+	crate1.draw();
+	crate2.draw();
+	crate3.draw();
+	crate4.draw();
+	crate5.draw();
+	crate6.draw();
+	crate7.draw();
+	crate8.draw();
+	crate9.draw();
+	crate10.draw();
+	crate11.draw();
+	crate12.draw();
+	crate13.draw();
+	crate14.draw();
+	crate15.draw();
+	crate16.draw();
+	crate17.draw();
+	crate18.draw();
+	crate19.draw();
+	crate20.draw();
+	crate21.draw();
+	crate22.draw();
+	crate23.draw();
+	crate24.draw();
+	crate25.draw();
+	crate26.draw();
+	crate27.draw();
+	crate28.draw();
+	crate29.draw();
+}
+
+void drawBarrels() {
+	barrel1.draw();
+	barrel2.draw();
+	barrel3.draw();
+	barrel4.draw();
+	barrel5.draw();
+	barrel6.draw();
+	barrel7.draw();
+	barrel8.draw();
+	barrel9.draw();
+	barrel10.draw();
+	barrel11.draw();
+	barrel12.draw();
+	barrel13.draw();
+	barrel14.draw();
+	barrel15.draw();
+	barrel16.draw();
+	barrel17.draw();
+	barrel18.draw();
+	barrel19.draw();
+	barrel20.draw();
+	barrel21.draw();
+	barrel22.draw();
+	barrel23.draw();
+	barrel24.draw();
+	barrel25.draw();
+	barrel26.draw();
+	barrel27.draw();
+	barrel28.draw();
+	barrel29.draw();
+	barrel30.draw();
+	barrel31.draw();
+	barrel32.draw();
+	barrel33.draw();
+	barrel34.draw();
+	barrel35.draw();
+	barrel36.draw();
+	barrel37.draw();
+	barrel38.draw();
+	barrel39.draw();
+	barrel40.draw();
+	barrel41.draw();
+
+}
+
+float startX = playerX;
+float startZ = playerZ;
+
+void updateJump() {
+	if (!isJumping) return;
+
+	float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	float elapsedTime = currentTime - jumpStartTime;
+
+	// Check if the jump duration has been exceeded
+	if (elapsedTime > jumpDuration) {
+		isJumping = false;
+		playerY = -0.3f; // Reset to ground level
+		return;
+	}
+
+	// Calculate the normalized time (0 to 1) within the jump duration
+	float t = elapsedTime / jumpDuration;
+
+	// Parabolic equation for jump (h = a * t * (1 - t)), scaled by jumpHeight
+	playerY = -0.3f + jumpHeight * (4.0f * t * (1.0f - t));
+	float totalMovement = 2.0f;
+
+	float movement = totalMovement * t; 
+
+	if (playerAngle == 0.0f) {
+		playerZ = startZ - movement; // Move -Z
+	}
+	else if (playerAngle == 180.0f) {
+		playerZ = startZ + movement; // Move +Z
+	}
+	else if (playerAngle == -90.0f) {
+		playerX = startX + movement; // Move +X
+	}
+	else if (playerAngle == 90.0f) {
+		playerX = startX - movement; // Move -X
+	}
+
+	// Redraw the scene
+	glutPostRedisplay();
+}
+
+
+
+
 void Display() {
 	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 	
-	
-
 	switch (currentGameState) {
 	case PLAYING:
 		setupCamera();
 		setupLights();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Draw tennis court floor and lines
 		drawCourt();
 		drawRoom();
 		drawRoom2();
@@ -1033,11 +1385,17 @@ void Display() {
 		drawCoridor2();
 		drawPlayer();
 		drawEnv1();
+		drawCrates();
+		drawBarrels();
 
 		drawCoinCollectibles();
 		checkCoinCollision();
 		drawTraps();
 		checkTrapsCollision();
+
+		updateJump();
+
+		checkKey();
 
 		char scoreText[20];
 		sprintf(scoreText, "Score: %d", score);  // Format score as string
@@ -1047,9 +1405,21 @@ void Display() {
 		
 		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
 		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
+		if (score < 1000) {
+			renderText("You need to collect  " + intToString(1000 - score) + " to find key", windowWidth - 750, windowHeight - 20);
+		}
+		else {
+			renderText("You have collected enough coins to find the key", windowWidth - 750, windowHeight - 20);
+		}
+		
 		if (gameLost) {
 			currentGameState = GAME_LOST;
 		}
+
+		if (key1.collected) {
+			currentGameState = LEVEL2_START;
+		}
+		
 		break;
 
 
@@ -1062,10 +1432,29 @@ void Display() {
 		renderText("Score: " + std::to_string(score), windowWidth / 2 - 50, windowHeight / 2 - 20);
 		renderText("Click to Restart", windowWidth / 2 - 50, windowHeight / 2 - 40);
 		break;
+
+	case LEVEL2_START:
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		renderText("LEVEL 1 COMPLETE", windowWidth / 2 - 50, windowHeight / 2);
+		renderText("Score: " + std::to_string(score), windowWidth / 2 - 50, windowHeight / 2 - 20);
+		renderText("Click to Restart level 2", windowWidth / 2 - 50, windowHeight / 2 - 40);
+		break;
+
+	case LEVEL2_PLAYING:
+		setupCamera();
+		setupLights();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		break;
+
 	}
 
 	glFlush();
 }
+
+
 
 void mouseClick(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
@@ -1077,8 +1466,45 @@ void mouseClick(int button, int state, int x, int y) {
 			resetCoins();
 			playerX = -3.0f;
 			playerZ = 10.0f;
+			key1.collected = false;
+		}
+		if (currentGameState == LEVEL2_START) {
+			currentGameState = LEVEL2_PLAYING;
+			score = 0;
+			playerHealth = 100;
+			gameLost = false;
+			resetCoins();
+			playerX = -3.0f;
+			playerZ = 10.0f;
+			key1.collected = false;
+		}
+		if (currentGameState == PLAYING && !isJumping) {
+			isJumping = true;
+			jumpStartTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+			std::cout << "i am jumping" << std::endl;
+			startX = playerX;
+			startZ = playerZ;
 		}
 	}
+}
+
+bool checkAllCratesBarrelsCollisions(float newPlayerX, float newPlayerZ) {
+	std::vector<Crate> crates = { crate1, crate2, crate3, crate4, crate5, crate6, crate7, crate8, crate9, crate10, crate11, crate12, crate13, crate14, crate15, crate16, crate17, crate18, crate19, crate20, crate21, crate22, crate23, crate24, crate25, crate26, crate27, crate28, crate29 };
+	std::vector<Barrel> barrels = { barrel1, barrel2, barrel3, barrel4, barrel5, barrel6, barrel7, barrel8, barrel9, barrel10, barrel11, barrel12, barrel13, barrel14, barrel15, barrel16, barrel17, barrel18, barrel19, barrel20, barrel21, barrel22, barrel23, barrel24, barrel25, barrel26, barrel27, barrel28, barrel29, barrel30, barrel31, barrel32, barrel33, barrel34, barrel35, barrel36, barrel37, barrel38, barrel39, barrel40, barrel41 };
+
+	for (const auto& crate : crates) {
+		if (crate.checkCollision(newPlayerX, newPlayerZ, 0.5f)) {
+			return true;
+		}
+	}
+
+	for (const auto& barrel : barrels) {
+		if (barrel.checkCollision(newPlayerX, newPlayerZ, 0.5f)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void Keyboard(unsigned char key, int x, int y) {
@@ -1149,18 +1575,22 @@ void Keyboard(unsigned char key, int x, int y) {
 	case GLUT_KEY_ESCAPE:
 		exit(EXIT_SUCCESS);
 	}
-	if ((newPlayerX >= -5.6f && newPlayerX <= 5.6f && newPlayerZ >= -13.3f && newPlayerZ <= 13.3f) || // Main room
+	if (((newPlayerX >= -5.6f && newPlayerX <= 5.6f && newPlayerZ >= -13.3f && newPlayerZ <= 13.3f) || // Main room
 		(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
 		(newPlayerX >= 9.2f && newPlayerX <= 20.8f && newPlayerZ >= -10.2f && newPlayerZ <= 10.2f) || // Room 1
 		(newPlayerX >= -1.3f && newPlayerX <= 1.3f && newPlayerZ >= -19.7f && newPlayerZ <= -13.2f) || // Corridor 2
-		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) { // Room 2
-		// If the new position is valid, update the player's position
+		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) && // Room 2
+		!checkAllCratesBarrelsCollisions(newPlayerX, newPlayerZ)) {
+		
 		playerX = newPlayerX;
 		playerZ = newPlayerZ;
-		//PlayCollisionSound(".../../../Downloads/Bruh (Sound Effect) 1 second video!.wav");
+		startX = playerX;
+		startZ = playerZ;
 		updateCameraPosition();
 		updateCameraPosition2();
-
+	}
+	else {
+		std::cout << "Collision detected! Player cannot move in this direction." << std::endl;
 	}
 	printPlayerPosition();
 
@@ -1178,6 +1608,7 @@ void Keyboard(unsigned char key, int x, int y) {
 
 void printPlayerPosition() {
 	std::cout << "Player Position - X: " << playerX << ", Z: " << playerZ << std::endl;
+	std::cout << "Player Angle : " << playerAngle << std::endl;
 }
 
 void Special(int key, int x, int y) {
