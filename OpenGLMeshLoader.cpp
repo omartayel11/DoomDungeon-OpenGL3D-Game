@@ -52,7 +52,7 @@ bool isForehand = false;  // Whether forehand motion is happening
 float forehandAngle = 0.0f;  // The angle of the forehand motion
 float forehandSpeed = 2.0f;  // Speed at which the forehand swing occurs
 
-int score = 0;
+int score = 1100;
 bool ballHit = false;
 bool ballHit2 = false;
 float ballRadius = 0.5f;
@@ -65,8 +65,9 @@ int playerHealth = 100;
 enum GameState { PLAYING, GAME_WON, GAME_LOST, LEVEL2_START, LEVEL2_PLAYING };
 GameState currentGameState = PLAYING;
 
-Model_3DS model_printer;
+Model_3DS model_coin;
 Model_3DS model_tree;
+Model_3DS model_key;
 
 class Camera {
 public:
@@ -161,8 +162,8 @@ public:
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
 
 		// Draw the coin model
-		glScalef(10.1f, 10.1f, 10.1f); // Scale the model as needed
-		model_printer.Draw(); // Render the .3ds model
+		glScalef(4.0f, 4.0f, 4.0f); // Scale the model as needed
+		model_coin.Draw(); // Render the .3ds model
 
 		glPopMatrix();
 
@@ -339,17 +340,26 @@ public:
 		glPushMatrix();
 		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
 
-		// Draw the key (a simple cylinder for now)
-		glColor3f(0.8f, 1.5f, 0.2f); // Bronze color
-		GLUquadric* quad = gluNewQuadric();
-		gluDisk(quad, 0.0f, radius, 20, 1); // Top face
-		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the side
-		gluCylinder(quad, radius, radius, 0.1f, 20, 1); // Side face
-		glTranslatef(0.0f, 0.1f, 0.0f); // Move up slightly to draw the bottom face
-		gluDisk(quad, 0.0f, radius, 20, 1); // Bottom face
-		gluDeleteQuadric(quad);
+		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+		// Reset material properties (use white diffuse and ambient to avoid color influence)
+		GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+		GLfloat defaultShininess = 0.0f;
+
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+		// Draw the coin model
+		glScalef(0.25f, 0.25f, 0.25f); // Scale the model as needed
+		model_key.Draw();
 
 		glPopMatrix();
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	void checkCollision(float playerX, float playerZ) {
@@ -1665,8 +1675,9 @@ void Special(int key, int x, int y) {
 void LoadAssets()
 {
 	
-	model_printer.Load("Models/house/uploads_files_233898_50ct.3ds");
-	model_tree.Load("Models/tree/Tree1.3ds");
+	model_coin.Load("Models/house/uploads_files_233898_50ct.3ds");
+	model_key.Load("Models/key/broom 3ds.3DS");
+
 
 }
 
