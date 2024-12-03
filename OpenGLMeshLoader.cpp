@@ -17,7 +17,7 @@
 #define DEG2RAD(a) (a * 0.0174532925)
 #define M_PI 3.14159265358979323846
 
-
+GLuint tex;
 void PlaySoundEffect(const char* filename);
 void PlayCollisionSound(const char* filename);
 void printPlayerPosition();
@@ -52,7 +52,7 @@ bool isForehand = false;  // Whether forehand motion is happening
 float forehandAngle = 0.0f;  // The angle of the forehand motion
 float forehandSpeed = 2.0f;  // Speed at which the forehand swing occurs
 
-int score = 0;
+int score = 500;
 bool ballHit = false;
 bool ballHit2 = false;
 float ballRadius = 0.5f;
@@ -75,8 +75,16 @@ Model_3DS model_tree;
 Model_3DS model_key;
 Model_3DS model_trap;
 Model_3DS model_crate;
+Model_3DS model_player;
 
-GLTexture tex_ground;
+GLTexture tex_crate;
+GLTexture tex_floor;
+GLTexture tex_wall1;
+GLTexture tex_barell;
+GLTexture tex_wall2;
+GLTexture tex_floor2;
+
+
 
 class Camera {
 public:
@@ -578,7 +586,7 @@ public:
 
 		// Bind the texture
 		glEnable(GL_TEXTURE_2D);
-		tex_ground.Use();
+		tex_crate.Use();
 
 		// Set color to white to avoid any color tint
 		glColor3f(1.0f, 1.0f, 1.0f);
@@ -654,11 +662,45 @@ public:
 	void draw() {
 		glPushMatrix();
 		glTranslatef(x, y, z);
-		glColor3f(0.5f, 0.25f, 1.0f); // Dark brown color for the barrel
+		glColor3f(1.0f, 1.0f, 1.0f); // Set color to white to avoid tinting the texture
+
+		// Set material properties to increase brightness
+		GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+		GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+		GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+		GLfloat mat_shininess[] = { 50.0f };
+
+		glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+		// Enable texturing
+		glEnable(GL_TEXTURE_2D);
+		tex_barell.Use(); // Bind the tex_barell texture
+
 		GLUquadric* quad = gluNewQuadric();
+		gluQuadricTexture(quad, GL_TRUE); // Enable texture coordinates for the quadric
+
+		// Draw the cylinder
 		gluCylinder(quad, radius, radius, height, 20, 1);
+
+		// Draw the top base
+		glPushMatrix();
+		glTranslatef(0.0f, 0.0f, height);
+		gluDisk(quad, 0.0f, radius, 20, 1);
+		glPopMatrix();
+
+		// Draw the bottom base
+		gluDisk(quad, 0.0f, radius, 20, 1);
+
+		// Disable texturing
+		glDisable(GL_TEXTURE_2D);
+
 		glPopMatrix();
 	}
+
+
 
 	bool checkCollision(float playerX, float playerZ, float playerRadius) const {
 		// Calculate the distance between the player and the barrel
@@ -895,130 +937,30 @@ void drawPlayer() {
 	//glDisable(GL_LIGHTING);
 
 	glPushMatrix();
-	glTranslatef(playerX, playerY, playerZ); // Player's position
-	glRotatef(playerAngle, 0.0f, 1.0f, 0.0f); // Rotate to face movement direction
+	glTranslatef(playerX, playerY+0.2, playerZ); // Player's position
+	glRotatef(playerAngle+180, 0.0f, 1.0f, 0.0f); // Rotate to face movement direction
+	// Draw the player model
+	glColor3f(1.0f, 1.0f, 1.0f); 
 
-	// Head
-	glColor3f(1.0f, 0.8f, 0.6f); // Skin tone
-	glPushMatrix();
-	glTranslatef(0.0f, 1.8f, 0.0f);
-	glutSolidSphere(0.2f, 20, 20); // Head
-	glPopMatrix();
+	glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+	// Reset material properties (use white diffuse and ambient to avoid color influence)
+	GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+	GLfloat defaultShininess = 0.0f;
 
-	// Eyes (two small spheres)
-	glColor3f(0.0f, 0.0f, 0.0f); // Black color for the eyes
-	// Right Eye
-	glPushMatrix();
-	glTranslatef(0.1f, 1.9f, -0.16f); // Position on the right side of the face
-	glutSolidSphere(0.05f, 10, 10); // Right eye
-	glPopMatrix();
-	// Left Eye
-	glPushMatrix();
-	glTranslatef(-0.1f, 1.9f, -0.16f); // Position on the left side of the face
-	glutSolidSphere(0.05f, 10, 10); // Left eye
-	glPopMatrix();
-
-	// Nose (small cone)
-	glColor3f(1.0f, 0.8f, 0.6f); // Skin tone
-	glPushMatrix();
-	glTranslatef(0.0f, 1.7f, 0.2f); // Nose position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f); // Rotate cone to point outwards
-	glutSolidCone(0.05f, 0.1f, 10, 10); // Nose
-	glPopMatrix();
-
-	// Mouth (simple box to approximate a mouth)
-	glColor3f(0.8f, 0.0f, 0.0f); // Red color for the mouth
-	glPushMatrix();
-	glTranslatef(0.0f, 1.8f, -0.19f); // Position the mouth below the nose
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f); // Rotate to horizontal
-	glScalef(1.2f, 1.05f, 1.05f); // Scale to make a wide mouth shape
-	glutSolidCube(0.05f); // Mouth as a small box (cube)
-	glPopMatrix();
-
-	// Body
-	glColor3f(0.0f, 0.5f, 1.0f); // Blue shirt
-	glPushMatrix();
-	glTranslatef(0.0f, 1.2f, 0.0f);
-	glScalef(0.3f, 0.6f, 0.2f);
-	glutSolidCube(1.0f); // Torso
-	glPopMatrix();
-
-	// Arms (fixed in position)
-	glColor3f(1.0f, 0.8f, 0.6f); // Skin tone
-
-	// Right Arm (Forehand motion)
-	glPushMatrix();
-	glTranslatef(0.25f, 1.3f, 0.0f);  // Position of right arm
-
-	glRotatef(30, 0, 0, 1);  // Rotate slightly for forehand motion
-
-	if (isForehand) {
-		// Apply forehand motion (rotation over time)
-		glRotatef(forehandAngle, 1.0f, 0.0f, 0.0f);
-		if (forehandAngle > -60.0f) {
-			forehandAngle -= forehandSpeed;
-		}
-		else {
-			isForehand = false;  // Stop after swing completes
-			forehandAngle = 0.0f; // Reset angle for next swing
-		}
-	}
-	glScalef(0.1f, 0.5f, 0.1f); // Arm size
-	glutSolidCube(1.0f); // Right arm
-	glPopMatrix();  // End arm transformation
-
-	// Left Arm (no forehand motion)
-	glPushMatrix();
-	glTranslatef(-0.25f, 1.3f, 0.0f);
-	glRotatef(-30, 0, 0, 1);
-	glScalef(0.1f, 0.5f, 0.1f);
-	glutSolidCube(1.0f); // Left arm
-	glPopMatrix();
-
-	// Right Leg with walking motion
-	glColor3f(0.0f, 0.5f, 1.0f); // Shorts color
-	glPushMatrix();
-	glTranslatef(0.1f, 0.6f, 0.0f);
-	glRotatef(legAngle, 1, 0, 0); // Forward-backward leg swing
-	glScalef(0.15f, 0.5f, 0.15f);
-	glutSolidCube(1.0f); // Right leg
-	glPopMatrix();
-
-	// Left Leg with walking motion
-	glPushMatrix();
-	glTranslatef(-0.1f, 0.6f, 0.0f);
-	glRotatef(-legAngle, 1, 0, 0); // Forward-backward leg swing opposite to right leg
-	glScalef(0.15f, 0.5f, 0.15f);
-	glutSolidCube(1.0f); // Left leg
-	glPopMatrix();
-
-	// Tennis racket in right hand (move with right arm)
-	glColor3f(0.4f, 0.2f, 0.0f); // Brown handle
-	glPushMatrix();
-	glTranslatef(0.35f, 1.2f, 0.0f);  // Position racket at the hand
-	glRotatef(-30, 0, 0, 1);  // Tilt racket
-	glRotatef(-20, 0, 1, 0);  // Additional rotation
-
-	// Apply forehand rotation to the racket, just like the arm
-	if (isForehand) {
-		glRotatef(forehandAngle, 1.0f, 0.0f, 0.0f); // Rotate racket with arm
-	}
-
-	// Handle of the racket
-	glPushMatrix();
-	glScalef(0.05f, 0.4f, 0.05f);
-	glutSolidCube(1.0f);
-	glPopMatrix();
-
-	// Racket head
-	glColor3f(0.9f, 0.9f, 0.9f); // Light gray
-	glTranslatef(0.0f, 0.3f, 0.0f);
-	glutSolidTorus(0.02f, 0.15f, 10, 10); // Racket head (with forehand rotation)
-	glPopMatrix();  // End racket transformation
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+	glScalef(1.5f, 1.5f, 1.5f);  // Scale the player model
+	model_player.Draw();
 
 	glPopMatrix();  // End player transformation
+	glDisable(GL_TEXTURE_2D);
 	//glEnable(GL_LIGHTING);  // Restore lighting
 }
+
 
 void renderText(float x, float y, const char* text) {
 	glDisable(GL_LIGHTING);
@@ -1056,80 +998,391 @@ void timerCallback(int value) {
 	glutPostRedisplay();  // Redraw the screen to update the timer display
 }
 
-
 void drawWall(double width, double height, double thickness) {
+	// Enable texturing
+	glEnable(GL_TEXTURE_2D);
+	if (currentGameState == PLAYING) {
+		tex_floor.Use();
+	}
+	else {
+		tex_wall2.Use();
+	}
+
 	glPushMatrix();
 	glScaled(width, height, thickness);
-	glutSolidCube(1.0);
+	glColor3f(1.0f, 1.0f, 1.0f); // Set material properties to increase brightness
+	// Set material properties to increase brightness
+	GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	// Draw the wall with texture coordinates
+	glBegin(GL_QUADS);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
 	glPopMatrix();
 
+	// Disable texturing
+	glDisable(GL_TEXTURE_2D);
 }
+
 
 float toRadians(float degrees) {
 	return degrees * (3.14159f / 180.0f);
 }
 
 void drawCourt() {
-
+	// Enable texturing
+	glEnable(GL_TEXTURE_2D);
+	tex_floor.Use(); // Bind the tex_floor texture
+	if (currentGameState == PLAYING) {
+		tex_floor.Use();
+	}
+	else {
+		tex_floor2.Use();
+	}
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
 	glTranslatef(0.0f, -0.15f, 0.0f);  // Move cube slightly below the court surface
-	glColor3f(0.54f, 0.27f, 0.07f);   // Brownish color for the ground
+	glColor3f(0.8f, 0.8f, 1.0f);   // Lighter brownish color for the ground
 	glScaled(12.0f, 0.2f, 26.8f);     // Scale the cube to match the court size and add thickness
-	glutSolidCube(1.0f);  // Draw the ground cube
+
+	// Set material properties to increase brightness
+	GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	// Draw the ground cube with texture coordinates
+	glBegin(GL_QUADS);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
 	glPopMatrix();
 
-
+	// Disable texturing
+	glDisable(GL_TEXTURE_2D);
 }
 
+
+
 void drawRoom() {
+	// Enable texturing
+	glEnable(GL_TEXTURE_2D);
+	tex_floor.Use(); // Bind the tex_floor texture
 
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
 	glTranslatef(15.0f, -0.15f, 0.0f);  // Move cube slightly below the court surface
-	glColor3f(0.54f, 0.27f, 0.07f);   // Brownish color for the ground
+	glColor3f(1.0f, 1.0f, 1.0f);   // Lighter brownish color for the ground
 	glScaled(12.0f, 0.2f, 20.8f);     // Scale the cube to match the court size and add thickness
-	glutSolidCube(1.0f);  // Draw the ground cube
+
+	// Set material properties to increase brightness
+	GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	// Draw the ground cube with texture coordinates
+	glBegin(GL_QUADS);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
 	glPopMatrix();
 
+	// Disable texturing
+	glDisable(GL_TEXTURE_2D);
 }
 
-void drawRoom2() {
 
+void drawRoom2() {
+	// Enable texturing
+	glEnable(GL_TEXTURE_2D);
+	tex_floor.Use(); // Bind the tex_floor texture
 
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
 	glTranslatef(0.0f, -0.15f, -30.0f);  // Move cube slightly below the court surface
-	glColor3f(0.54f, 0.27f, 0.07f);   // Brownish color for the ground
+	glColor3f(1.0f, 1.0f, 1.0f);   // Lighter brownish color for the ground
 	glScaled(12.0f, 0.2f, 20.8f);     // Scale the cube to match the court size and add thickness
-	glutSolidCube(1.0f);  // Draw the ground cube
+
+	// Set material properties to increase brightness
+	GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	// Draw the ground cube with texture coordinates
+	glBegin(GL_QUADS);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
 	glPopMatrix();
 
+	// Disable texturing
+	glDisable(GL_TEXTURE_2D);
 }
 
 void drawCoridor1() {
+	// Enable texturing
+	glEnable(GL_TEXTURE_2D);
+	tex_floor.Use(); // Bind the tex_floor texture
 
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
 	glTranslatef(7.5f, -0.15f, 0.0f);  // Move cube slightly below the court surface
-	glColor3f(0.54f, 0.27f, 0.07f);   // Brownish color for the ground
+	glColor3f(1.0f, 1.0f, 1.0f);   // Lighter brownish color for the ground
 	glScaled(3.0f, 0.2f, 3.8f);     // Scale the cube to match the court size and add thickness
-	glutSolidCube(1.0f);  // Draw the ground cube
+
+	// Set material properties to increase brightness
+	GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	// Draw the ground cube with texture coordinates
+	glBegin(GL_QUADS);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
 	glPopMatrix();
 
-
+	// Disable texturing
+	glDisable(GL_TEXTURE_2D);
 }
 
 void drawCoridor2() {
+	// Enable texturing
+	glEnable(GL_TEXTURE_2D);
+	tex_floor.Use(); // Bind the tex_floor texture
 
 	// Add a cube beneath the court to give the impression of thickness (ground)
 	glPushMatrix();
-	glTranslatef(0.0f, -0.15f, -14.0f);  // Move cube slightly below the court surface
-	glColor3f(0.54f, 0.27f, 0.07f);   // Brownish color for the ground
-	glScaled(3.0f, 0.2f, 11.2f);     // Scale the cube to match the court size and add thickness
-	glutSolidCube(1.0f);  // Draw the ground cube
+	glTranslatef(0.0f, -0.15f, -16.0f);  // Move cube slightly below the court surface
+	glColor3f(1.0f, 1.0f, 1.0f);   // Lighter color for the ground
+	glScaled(3.0f, 0.2f, 7.0f);     // Scale the cube to match the court size and add thickness
+
+	// Set material properties to increase brightness
+	GLfloat mat_ambient[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_diffuse[] = { 0.8f, 0.5f, 0.3f, 1.0f };
+	GLfloat mat_specular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	// Draw the ground cube with texture coordinates
+	glBegin(GL_QUADS);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
 	glPopMatrix();
 
+	// Disable texturing
+	glDisable(GL_TEXTURE_2D);
 }
 
 void drawEnv1() {
@@ -1142,37 +1395,37 @@ void drawEnv1() {
 	// Back wall
 	glPushMatrix();
 	glTranslatef(-3.7f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(4.5, 2.0, 0.2);
+	drawWall(4.5, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(3.7f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(4.5, 2.0, 0.2);
+	drawWall(4.5, 10.0, 0.2);
 	glPopMatrix();
 
 	// Left wall
 	glPushMatrix();
 	glTranslatef(-6.0f, 1.0f, 0.0f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(27.0, 2.0, 0.2);
+	drawWall(27.0, 10.0, 0.2);
 	glPopMatrix();
 
 	// Right wall
 	glPushMatrix();
 	glTranslatef(6.0f, 1.0f, -7.5f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(11.5, 2.0, 0.2);
+	drawWall(11.5, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(6.0f, 1.0f, 7.5f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(11.5, 2.0, 0.2);
+	drawWall(11.5, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.0f, 1.0f, 13.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
+	drawWall(12.0, 10.0, 0.2);
 	glPopMatrix();
 
 	//------------------------
@@ -1180,18 +1433,18 @@ void drawEnv1() {
 	glPushMatrix();
 	glTranslatef(21.0f, 1.0f, 0.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 2.0, 0.2);
+	drawWall(21.0, 10.0, 0.2);
 	glPopMatrix();
 
 	// Back wall
 	glPushMatrix();
 	glTranslatef(15.0f, 1.0f, -10.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
+	drawWall(12.0, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(15.0f, 1.0f, 10.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
+	drawWall(12.0, 10.0, 0.2);
 	glPopMatrix();
 
 	//--------------------
@@ -1199,21 +1452,21 @@ void drawEnv1() {
 	glTranslatef(0.0f, 0.0f, -27.0f);
 	glPushMatrix();
 	glTranslatef(0.0f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 2.0, 0.2);
+	drawWall(12.0, 10.0, 0.2);
 	glPopMatrix();
 
 	// Left wall
 	glPushMatrix();
 	glTranslatef(-6.0f, 1.0f, -3.0f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 2.0, 0.2);
+	drawWall(21.0, 10.0, 0.2);
 	glPopMatrix();
 
 	// Right wall
 	glPushMatrix();
 	glTranslatef(6.0f, 1.0f, -3.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 2.0, 0.2);
+	drawWall(21.0, 10.0, 0.2);
 	glPopMatrix();
 	glPopMatrix();
 
@@ -1221,12 +1474,12 @@ void drawEnv1() {
 
 	glPushMatrix();
 	glTranslatef(-3.8f, 1.0f, -19.6f);  // Adjusted to match the court boundary
-	drawWall(4.5, 2.0, 0.2);
+	drawWall(4.5, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(3.8f, 1.0f, -19.6f);  // Adjusted to match the court boundary
-	drawWall(4.5, 2.0, 0.2);
+	drawWall(4.5, 10.0, 0.2);
 	glPopMatrix();
 
 	//_-------------------------
@@ -1234,25 +1487,25 @@ void drawEnv1() {
 	glPushMatrix();
 	glTranslatef(9.0f, 1.0f, -6.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(8.6, 2.0, 0.2);
+	drawWall(8.6, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(9.0f, 1.0f, 6.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(8.6, 2.0, 0.2);
+	drawWall(8.6, 10.0, 0.2);
 	glPopMatrix();
 
 	//------------------------------
 
 	glPushMatrix();
 	glTranslatef(7.6f, 1.0f, 1.8f);  // Adjusted to match the court boundary
-	drawWall(3.0, 2.0, 0.2);
+	drawWall(3.0, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(7.6f, 1.0f, -1.8f);  // Adjusted to match the court boundary
-	drawWall(3.0, 2.0, 0.2);
+	drawWall(3.0, 10.0, 0.2);
 	glPopMatrix();
 
 	//-------------------------------------------
@@ -1260,13 +1513,13 @@ void drawEnv1() {
 	glPushMatrix();
 	glTranslatef(-1.5f, 1.0f, -16.5f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(6.0, 2.0, 0.2);
+	drawWall(6.0, 10.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(1.5f, 1.0f, -16.5f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(6.0, 2.0, 0.2);
+	drawWall(6.0, 10.0, 0.2);
 	glPopMatrix();
 
 
@@ -1370,7 +1623,7 @@ bool followPlayer2 = false; // Flag to indicate if the camera should follow the 
 void updateCameraPosition2() {
 	if (followPlayer2) {
 		// Set the camera's position to the player's head position
-		camera.setView(playerX, 3.8f, playerZ + 3, playerX - sin(DEG2RAD(playerAngle)), 1.8f, playerZ - cos(DEG2RAD(playerAngle)));
+		camera.setView(playerX, 5.2f, playerZ + 3.0, playerX - sin(DEG2RAD(playerAngle)), 3.1f, playerZ - cos(DEG2RAD(playerAngle)));
 	}
 }
 
@@ -1715,6 +1968,25 @@ void drawBarrels() {
 
 }
 
+bool checkAllCratesBarrelsCollisions(float newPlayerX, float newPlayerZ) {
+	std::vector<Crate> crates = { crate1, crate2, crate3, crate4, crate5, crate6, crate7, crate8, crate9, crate10, crate11, crate12, crate13, crate14, crate15, crate16, crate17, crate18, crate19, crate20, crate21, crate22, crate23, crate24, crate25, crate26, crate27, crate28, crate29 };
+	std::vector<Barrel> barrels = { barrel1, barrel2, barrel3, barrel4, barrel5, barrel6, barrel7, barrel8, barrel9, barrel10, barrel11, barrel12, barrel13, barrel14, barrel15, barrel16, barrel17, barrel18, barrel19, barrel20, barrel21, barrel22, barrel23, barrel24, barrel25, barrel26, barrel27, barrel28, barrel29, barrel30, barrel31, barrel32, barrel33, barrel34, barrel35, barrel36, barrel37, barrel38, barrel39, barrel40, barrel41 };
+
+	for (const auto& crate : crates) {
+		if (crate.checkCollision(newPlayerX, newPlayerZ, 0.5f)) {
+			return true;
+		}
+	}
+
+	for (const auto& barrel : barrels) {
+		if (barrel.checkCollision(newPlayerX, newPlayerZ, 0.5f)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 float startX = playerX;
 float startZ = playerZ;
 
@@ -1739,23 +2011,38 @@ void updateJump() {
 	float totalMovement = 5.5f;
 
 	float movement = totalMovement * t;
+	float newPlayerX = playerX;
+	float newPlayerZ = playerZ;
 
 	if (playerAngle == 0.0f) {
-		playerZ = startZ - movement; // Move -Z
+		newPlayerZ = startZ - movement; // Move -Z
 	}
 	else if (playerAngle == 180.0f) {
-		playerZ = startZ + movement; // Move +Z
+		newPlayerZ = startZ + movement; // Move +Z
 	}
 	else if (playerAngle == -90.0f) {
-		playerX = startX + movement; // Move +X
+		newPlayerX = startX + movement; // Move +X
 	}
 	else if (playerAngle == 90.0f) {
-		playerX = startX - movement; // Move -X
+		newPlayerX = startX - movement; // Move -X
+	}
+
+	// Check if the new position is within the allowed boundaries
+	if (((newPlayerX >= -5.6f && newPlayerX <= 5.6f && newPlayerZ >= -13.3f && newPlayerZ <= 13.3f) || // Main room
+		(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
+		(newPlayerX >= 9.2f && newPlayerX <= 20.8f && newPlayerZ >= -10.2f && newPlayerZ <= 10.2f) || // Room 1
+		(newPlayerX >= -1.3f && newPlayerX <= 1.3f && newPlayerZ >= -19.7f && newPlayerZ <= -13.2f) || // Corridor 2
+		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) && // Room 2
+		!checkAllCratesBarrelsCollisions(newPlayerX, newPlayerZ) && currentGameState == PLAYING) {
+
+		playerX = newPlayerX;
+		playerZ = newPlayerZ;
 	}
 
 	// Redraw the scene
 	glutPostRedisplay();
 }
+
 
 void Display() {
 	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
@@ -1806,7 +2093,6 @@ void Display() {
 		renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
 		displayTimer();
 
-
 		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
 		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
 		if (score < 1000) {
@@ -1823,6 +2109,7 @@ void Display() {
 		if (key1.collected) {
 			currentGameState = LEVEL2_START;
 		}
+
 
 		break;
 
@@ -1955,24 +2242,7 @@ void mouseClick(int button, int state, int x, int y) {
 	}
 }
 
-bool checkAllCratesBarrelsCollisions(float newPlayerX, float newPlayerZ) {
-	std::vector<Crate> crates = { crate1, crate2, crate3, crate4, crate5, crate6, crate7, crate8, crate9, crate10, crate11, crate12, crate13, crate14, crate15, crate16, crate17, crate18, crate19, crate20, crate21, crate22, crate23, crate24, crate25, crate26, crate27, crate28, crate29 };
-	std::vector<Barrel> barrels = { barrel1, barrel2, barrel3, barrel4, barrel5, barrel6, barrel7, barrel8, barrel9, barrel10, barrel11, barrel12, barrel13, barrel14, barrel15, barrel16, barrel17, barrel18, barrel19, barrel20, barrel21, barrel22, barrel23, barrel24, barrel25, barrel26, barrel27, barrel28, barrel29, barrel30, barrel31, barrel32, barrel33, barrel34, barrel35, barrel36, barrel37, barrel38, barrel39, barrel40, barrel41 };
 
-	for (const auto& crate : crates) {
-		if (crate.checkCollision(newPlayerX, newPlayerZ, 0.5f)) {
-			return true;
-		}
-	}
-
-	for (const auto& barrel : barrels) {
-		if (barrel.checkCollision(newPlayerX, newPlayerZ, 0.5f)) {
-			return true;
-		}
-	}
-
-	return false;
-}
 bool checkAllCratesBarrelsCollisions2(float newPlayerX, float newPlayerZ) {
 	std::vector<Crate> crates = { crate1, crate2, crate3, crate4, crate5, crate6, crate7, crate8, crate9, crate10, crate11, crate12, crate13, crate14, crate15, crate16, crate17, crate18, crate19, crate20, crate21, crate22, crate23, crate24, crate25, crate26, crate27, crate28, crate29 };
 	for (const auto& crate : crates) {
@@ -2128,8 +2398,17 @@ void LoadAssets()
 	model_key.Load("Models/key/broom 3ds.3DS");
 	model_trap.Load("Models/Bush/Bush 3 N030413.3DS");
 	model_crate.Load("Models/house/house.3ds");
+	model_player.Load("Models/player/pl.3ds");
 
-	tex_ground.Load("Textures/480-360-sample.bmp");
+	tex_crate.Load("Textures/crate.bmp");
+	tex_floor.Load("Textures/floor.bmp");
+	tex_wall1.Load("Textures/walls11.bmp");
+	tex_barell.Load("Textures/woodcrate.bmp");
+	tex_wall1.Load("Textures/walls11.bmp");
+	tex_wall2.Load("Textures/walls2.bmp");
+	tex_floor2.Load("Textures/floor2.bmp");
+
+	loadBMP(&tex, "Textures/sky.bmp", true);
 }
 
 
