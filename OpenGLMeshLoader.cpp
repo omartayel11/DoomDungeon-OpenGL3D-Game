@@ -35,6 +35,7 @@ public:
 	Vector3f operator/(float n) { return Vector3f(x / n, y / n, z / n); }
 	Vector3f unit() { return *this / sqrt(x * x + y * y + z * z); }
 	Vector3f cross(Vector3f v) { return Vector3f(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
+	float length() { return sqrt(x * x + y * y + z * z); }
 };
 
 Vector3f ballPosition(2.0f, 1.1f, 1.0f);  // Ball position
@@ -76,6 +77,10 @@ Model_3DS model_key;
 Model_3DS model_trap;
 Model_3DS model_crate;
 Model_3DS model_player;
+Model_3DS model_door1;
+Model_3DS model_door2;
+Model_3DS model_swtrap;
+Model_3DS model_gem;
 
 GLTexture tex_crate;
 GLTexture tex_floor;
@@ -198,7 +203,7 @@ public:
 		if (collected) return; // Skip if the coin is already collected
 
 		// Calculate the distance between the player and the coin
-		float distance = sqrt(pow(playerX - x, 2) + pow(playerY+1 - y, 2) + pow(playerZ - z, 2));
+		float distance = sqrt(pow(playerX - x, 2) + pow(playerY + 1 - y, 2) + pow(playerZ - z, 2));
 
 		// Check if the distance is less than the sum of the radii (collision detection)
 		if (distance < radius + 0.5f) { // Assuming player radius is 0.5f
@@ -282,7 +287,7 @@ public:
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
-		glScalef(0.02f, 0.02f, 0.01f); // Adjust the scale as needed
+		glScalef(8.02f, 8.02f, 1.01f); // Adjust the scale as needed
 		model_trap.Draw();
 		glPopMatrix();
 		glDisable(GL_TEXTURE_2D);
@@ -397,7 +402,7 @@ public:
 		float verticalOffset = 0.2f * sin(time);
 
 		glPushMatrix();
-		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
+		glTranslatef(x, y + verticalOffset+0.2, z); // Apply the vertical offset
 
 		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
@@ -414,7 +419,7 @@ public:
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
 
 		// Draw the coin model
-		glScalef(0.25f, 0.25f, 0.25f); // Scale the model as needed
+		glScalef(1.0f, 1.0f, 1.0f); // Scale the model as needed
 		model_key.Draw();
 
 		glPopMatrix();
@@ -522,10 +527,10 @@ public:
 		float verticalOffset = 0.2f * sin(time);
 
 		// Calculate the glow intensity using a sine wave
-		float glowIntensity = 0.75f + 0.25f * sin(time * 2.0f); // Varies between 0.75 and 1.0
+		float glowIntensity = 0.85f + 0.25f * sin(time * 2.0f); // Varies between 0.75 and 1.0
 
 		glPushMatrix();
-		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
+		glTranslatef(x, y + verticalOffset+1, z); // Apply the vertical offset
 
 		// Reset OpenGL state before drawing
 		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
@@ -543,8 +548,8 @@ public:
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
 
 		// Draw the gem model
-		glScalef(4.0f, 4.0f, 4.0f); // Scale the model as needed
-		model_coin.Draw(); // Render the .3ds model (assuming you have a gem model)
+		glScalef(0.5f, 0.5f, 0.5f); // Scale the model as needed
+		model_gem.Draw(); // Render the .3ds model (assuming you have a gem model)
 
 		glPopMatrix();
 
@@ -879,6 +884,7 @@ public:
 		glTranslatef(x, y, z);
 		glRotatef(angle, 0.0f, 0.0f, 1.0f); // Rotate around the Z-axis
 
+
 		// Draw the pendulum arm
 		glBegin(GL_LINES);
 		glVertex3f(0.0f, 0.0f, 0.0f);
@@ -887,7 +893,9 @@ public:
 
 		// Draw the trap at the end of the pendulum
 		glTranslatef(0.0f, -length, 0.0f);
-		glutSolidSphere(radius, 20, 20); // Draw the trap as a sphere
+		glScalef(0.15f, 0.15f, 0.15f); // Scale the model as needed
+		model_swtrap.Draw();
+		//glutSolidSphere(radius, 20, 20); // Draw the trap as a sphere
 
 		glPopMatrix();
 	}
@@ -920,6 +928,251 @@ SwingingTrap swingingTrap2(2.8f, 4.0f, 0.8f, 3.0f, 0.5f);
 SwingingTrap swingingTrap3(1.0f, 11.0f, 6.8f, 3.0f, 0.5f);
 SwingingTrap swingingTrap4(2.8f, 11.0f, 0.8f, 3.0f, 0.5f);
 
+class Door {
+public:
+	Vector3f position;
+	float width, height;
+	float openAngle;
+	bool isOpen;
+	Vector3f cubePosition;
+	float cubeSize;
+
+	Door(float x, float y, float z, float w, float h, float cubeSize)
+		: position(x, y, z), width(w), height(h), openAngle(0.0f), isOpen(false), cubeSize(cubeSize) {
+		cubePosition = Vector3f(x, y, z + w); // Position the cube behind the door
+	}
+
+	void draw() {
+		// Draw the door
+		if (currentGameState == PLAYING) {
+			glPushMatrix();
+			glTranslatef(position.x - 0.2, position.y, position.z);
+			glRotatef(openAngle + 90, 0.0f, 1.0f, 0.0f);
+			glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+			// Reset material properties (use white diffuse and ambient to avoid color influence)
+			GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+			GLfloat defaultShininess = 0.0f;
+
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+			// Draw the coin model
+			glScalef(1.0f, 1.0f, 1.0f); // Scale the model as needed
+			model_door2.Draw();
+			glPopMatrix();
+			glDisable(GL_TEXTURE_2D);
+
+			// Draw the cube behind the door
+			glPushMatrix();
+			glTranslatef(cubePosition.x, cubePosition.y, cubePosition.z - 3);
+			glColor3f(1.0f, 1.0f, 1.0f); // Blue color for the cube
+			glutSolidCube(cubeSize);
+			glPopMatrix();
+		}
+		if (currentGameState == LEVEL2_PLAYING) {
+			glPushMatrix();
+			glTranslatef(0.0, 15.4, 3.9);
+			glRotatef(openAngle + 90, 0.0f, 1.0f, 0.0f);
+			glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+			// Reset material properties (use white diffuse and ambient to avoid color influence)
+			GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+			GLfloat defaultShininess = 0.0f;
+
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+			// Draw the coin model
+			glScalef(10.02, 10.02, 10.02);
+			model_door1.Draw();
+			glPopMatrix();
+			glDisable(GL_TEXTURE_2D);
+
+			// Draw the cube behind the door
+			glPushMatrix();
+			glTranslatef(cubePosition.x, cubePosition.y, cubePosition.z - 3);
+			glColor3f(1.0f, 1.0f, 1.0f); // Blue color for the cube
+			glutSolidCube(cubeSize);
+			glPopMatrix();
+		}
+
+		
+	}
+
+	void openDoor() {
+		if (key1.collected && currentGameState == PLAYING) {
+			if (openAngle < 90.0f) {
+				openAngle += 0.5f; // Adjust the speed of opening as needed
+				if (openAngle >= 90.0f) {
+					openAngle = 90.0f;
+					isOpen = true;
+				}
+			}
+		}
+		if (gem1.collected && currentGameState == LEVEL2_PLAYING) {
+			if (openAngle < 90.0f) {
+				openAngle += 0.5f; // Adjust the speed of opening as needed
+				if (openAngle >= 90.0f) {
+					openAngle = 90.0f;
+					isOpen = true;
+				}
+			}
+		}
+		
+	}
+
+	bool checkCollision(Vector3f playerPosition) {
+		if (isOpen) {
+			float distance = (playerPosition - cubePosition).length();
+			if (distance < cubeSize / 2.0f) {
+				// Handle collision with the cube behind the open door
+				std::cout << "Player collided with the cube behind the open door!" << std::endl;
+				// Add your collision handling logic here
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+class Door2 {
+public:
+	Vector3f position;
+	float width, height;
+	float openAngle;
+	bool isOpen;
+	Vector3f cubePosition;
+	float cubeSize;
+
+	Door2(float x, float y, float z, float w, float h, float cubeSize)
+		: position(x, y, z), width(w), height(h), openAngle(0.0f), isOpen(false), cubeSize(cubeSize) {
+		cubePosition = Vector3f(x, y, z + w); // Position the cube behind the door
+	}
+
+	void draw() {
+		// Draw the door
+		if (currentGameState == PLAYING) {
+			glPushMatrix();
+			glTranslatef(position.x - 0.2, position.y, position.z);
+			glRotatef(openAngle + 90, 0.0f, 1.0f, 0.0f);
+			glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+			// Reset material properties (use white diffuse and ambient to avoid color influence)
+			GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+			GLfloat defaultShininess = 0.0f;
+
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+			// Draw the coin model
+			glScalef(1.0f, 1.0f, 1.0f); // Scale the model as needed
+			model_door2.Draw();
+			glPopMatrix();
+			glDisable(GL_TEXTURE_2D);
+
+			// Draw the cube behind the door
+			glPushMatrix();
+			glTranslatef(cubePosition.x, cubePosition.y , cubePosition.z - 3);
+			glColor3f(1.0f, 1.0f, 1.0f); // Blue color for the cube
+			glutSolidCube(cubeSize);
+			glPopMatrix();
+		}
+		if (currentGameState == LEVEL2_PLAYING) {
+			glPushMatrix();
+			glTranslatef(position.x - 0.2, position.y, position.z);
+			glRotatef(openAngle + 90, 0.0f, 1.0f, 0.0f);
+			glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+			// Reset material properties (use white diffuse and ambient to avoid color influence)
+			GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+			GLfloat defaultShininess = 0.0f;
+
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+			// Draw the coin model
+			glScalef(10.02, 10.02, 10.02);
+			model_door1.Draw();
+			glPopMatrix();
+			glDisable(GL_TEXTURE_2D);
+
+			// Draw the cube behind the door
+			glPushMatrix();
+			glTranslatef(cubePosition.x, cubePosition.y, cubePosition.z - 6);
+			glColor3f(1.0f, 1.0f, 1.0f); // Blue color for the cube
+			glutSolidCube(cubeSize);
+			glPopMatrix();
+		}
+
+
+	}
+
+	void openDoor() {
+	
+		if (gem1.collected && currentGameState == LEVEL2_PLAYING) {
+			if (openAngle < 90.0f) {
+				openAngle += 0.5f; // Adjust the speed of opening as needed
+				if (openAngle >= 90.0f) {
+					openAngle = 90.0f;
+					isOpen = true;
+				}
+			}
+		}
+
+	}
+
+	bool checkCollision(Vector3f playerPosition) {
+		if (isOpen) {
+			float distance = (playerPosition - cubePosition).length();
+			if (distance < cubeSize / 2.0f) {
+				// Handle collision with the cube behind the open door
+				std::cout << "Player collided with the cube behind the open door!" << std::endl;
+				// Add your collision handling logic here
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+// Example usage
+Door door(0.8f, 0.0f, -39.1f, 2.0f, 4.0f, 1.5f);
+Door2 door2(0.0f, 15.4f, 3.9f, 2.0f, 4.0f, 1.5f);
+
+void updateDoor(int value) {
+
+	door.openDoor();
+	glutPostRedisplay();
+	glutTimerFunc(16, updateDoor, 0); // Update every 16ms (~60 FPS)
+}
+void updateDoor2(int value) {
+
+	door2.openDoor();
+	glutPostRedisplay();
+	glutTimerFunc(16, updateDoor2, 0); // Update every 16ms (~60 FPS)
+}
+
 
 float playerX = -3.0f;  // Player's initial X position
 float playerZ = 10.0f;  // Player's initial Z position
@@ -934,15 +1187,21 @@ bool legMovingForward = true;  // Direction of leg movement (for walking)
 
 // Draw the player at its current position and orientation
 void drawPlayer() {
-	//glDisable(GL_LIGHTING);
+	// Compute the direction the camera is facing
+	Vector3f cameraView = (camera.center - camera.eye).unit(); // Camera's view vector
+	float cameraAngle = atan2(cameraView.z, cameraView.x) * (180.0f / M_PI); // Convert to degrees
+
+	// Set the player's angle based on the camera's orientation (invert direction)
+	playerAngle = -cameraAngle;
+	std::cout << "camera angle : " << cameraAngle << std::endl;
 
 	glPushMatrix();
-	glTranslatef(playerX, playerY+0.2, playerZ); // Player's position
-	glRotatef(playerAngle+180, 0.0f, 1.0f, 0.0f); // Rotate to face movement direction
+	glTranslatef(playerX, playerY + 0.2, playerZ); // Player's position
+	glRotatef(playerAngle , 0.0f, 1.0f, 0.0f); // Rotate player to face the camera's view direction
 	// Draw the player model
-	glColor3f(1.0f, 1.0f, 1.0f); 
+	glColor3f(1.0f, 1.0f, 1.0f);
 
-	glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+	glEnable(GL_TEXTURE_2D); // Enable 2D texturing
 	// Reset material properties (use white diffuse and ambient to avoid color influence)
 	GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -953,13 +1212,15 @@ void drawPlayer() {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
-	glScalef(1.5f, 1.5f, 1.5f);  // Scale the player model
+	glScalef(1.5f, 1.5f, 1.5f); // Scale the player model
 	model_player.Draw();
 
-	glPopMatrix();  // End player transformation
+	glPopMatrix(); // End player transformation
 	glDisable(GL_TEXTURE_2D);
-	//glEnable(GL_LIGHTING);  // Restore lighting
+	// glEnable(GL_LIGHTING); // Restore lighting
 }
+
+
 
 
 void renderText(float x, float y, const char* text) {
@@ -1527,7 +1788,7 @@ void drawEnv1() {
 
 void drawEnv2() {
 
-	drawCourt();	
+	drawCourt();
 
 	glColor3f(1.0f, 0.0f, 0.0f);
 	// Back wall
@@ -1845,7 +2106,7 @@ void checkMap() {
 	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
 	if (score == 500) {
 		map1.draw(time);
-		map1.checkCollision(playerX,playerY, playerZ); 
+		map1.checkCollision(playerX, playerY, playerZ);
 	}
 }
 
@@ -1919,8 +2180,8 @@ void drawCrates() {
 		crate57.draw();
 		crate58.draw();
 	}
-	
-	
+
+
 }
 
 void drawBarrels() {
@@ -2049,7 +2310,7 @@ void Display() {
 	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	//currentGameState = LEVEL2_START;
 
 	switch (currentGameState) {
 	case PLAYING:
@@ -2086,13 +2347,19 @@ void Display() {
 		model_crate.Draw();
 		glPopMatrix();*/
 
+		glPushMatrix();
+		//glTranslatef(2, 1, 10);
+		//glScalef(0.02, 0.02, 0.02);
+		door.draw();
+		glPopMatrix();
+
 		checkKey();
 
 		char scoreText[20];
 		sprintf(scoreText, "Score: %d", score);  // Format score as string
 		renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
 		displayTimer();
-
+		//door.isOpen = true;
 		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
 		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
 		if (score < 1000) {
@@ -2106,9 +2373,13 @@ void Display() {
 			currentGameState = GAME_LOST;
 		}
 		//key1.collected = true;
-		if (key1.collected) {
-			currentGameState = LEVEL2_START;
+		if (door.isOpen) {
+			Vector3f playerpos = Vector3f(playerX, playerY, playerZ);
+			if (playerX >= 0.4f && playerX <= 2.2f && playerZ >= -40.0f && playerZ <= -37.9f) {
+				currentGameState = LEVEL2_START;
+			}
 		}
+
 
 
 		break;
@@ -2162,6 +2433,19 @@ void Display() {
 		//drawTraps();
 		//checkTrapsCollision();
 
+		/*glPushMatrix();
+		glTranslatef(0.0, 15.4, 3.9);
+		glScalef(10.02, 10.02, 10.02);
+		glRotatef(90.0f, 0, 1, 0);
+		model_door1.Draw();
+		glPopMatrix();*/
+
+		glPushMatrix();
+		//glTranslatef(2, 1, 10);
+		//glScalef(0.02, 0.02, 0.02);
+		door2.draw();
+		glPopMatrix();
+
 		float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Convert milliseconds to seconds
 		float deltaTime = currentTime - lastFrameTime;
 		lastFrameTime = currentTime;
@@ -2181,7 +2465,7 @@ void Display() {
 		swingingTrap4.update(deltaTime);
 		swingingTrap4.draw();
 		swingingTrap4.checkCollision(playerX, playerY, playerZ);
-		
+
 		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
 		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
 		if (score < 500) {
@@ -2194,13 +2478,18 @@ void Display() {
 			reachedF3 = false;
 			renderText("You are on floor 2", windowWidth - 750, windowHeight - 20);
 		}
-		if (score==1000 && gem1.collected) {
+		if (score == 1000 && gem1.collected) {
 			reachedF2 = false;
 			reachedF3 = true;
 			renderText("You are on final floor", windowWidth - 750, windowHeight - 20);
 		}
+		if (door2.isOpen) {
+			Vector3f playerpos = Vector3f(playerX, playerY, playerZ);
+			if (playerX >= -3.7f && playerX <= 1.6f && playerZ >= 1.5f && playerZ <= 5.5f) {
+				currentGameState = LEVEL2_START;
+			}
+		}
 
-		
 		break;
 
 	}
@@ -2328,7 +2617,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		(newPlayerX >= 9.2f && newPlayerX <= 20.8f && newPlayerZ >= -10.2f && newPlayerZ <= 10.2f) || // Room 1
 		(newPlayerX >= -1.3f && newPlayerX <= 1.3f && newPlayerZ >= -19.7f && newPlayerZ <= -13.2f) || // Corridor 2
 		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) && // Room 2
-		!checkAllCratesBarrelsCollisions(newPlayerX, newPlayerZ) && currentGameState==PLAYING) {
+		!checkAllCratesBarrelsCollisions(newPlayerX, newPlayerZ) && currentGameState == PLAYING) {
 
 		playerX = newPlayerX;
 		playerZ = newPlayerZ;
@@ -2366,8 +2655,10 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void printPlayerPosition() {
-	std::cout << "Player Position - X: " << playerX << ", Z: " << playerZ << std::endl;
+	std::cout << "Player Position - X: " << playerX << ", Y: " << playerY << ", Z: " << playerZ<< std::endl;
 	std::cout << "Player Angle : " << playerAngle << std::endl;
+	std::cout << "door level 2 : " << door2.isOpen << std::endl;
+
 }
 
 void Special(int key, int x, int y) {
@@ -2393,12 +2684,16 @@ void Special(int key, int x, int y) {
 
 void LoadAssets()
 {
-	
+
 	model_coin.Load("Models/house/uploads_files_233898_50ct.3ds");
-	model_key.Load("Models/key/broom 3ds.3DS");
-	model_trap.Load("Models/Bush/Bush 3 N030413.3DS");
+	model_swtrap.Load("Models/key/broom 3ds.3DS");
+	model_key.Load("Models/key/Key9.3DS");
+	model_trap.Load("Models/trap/t.3ds");
 	model_crate.Load("Models/house/house.3ds");
 	model_player.Load("Models/player/pl.3ds");
+	model_door1.Load("Models/door/door1.3ds");
+	model_door2.Load("Models/door/d.3ds");
+	model_gem.Load("Models/gem/gem.3ds");
 
 	tex_crate.Load("Textures/crate.bmp");
 	tex_floor.Load("Textures/floor.bmp");
@@ -2460,6 +2755,9 @@ int main(int argc, char** argv) {
 	// Start the timer
 	glutTimerFunc(0, Timer, 0);
 	glutTimerFunc(1000, timerCallback, 0);
+	glutTimerFunc(16, updateDoor, 0); // Update every 16ms (~60 FPS)
+	glutTimerFunc(16, updateDoor2, 0); // Update every 16ms (~60 FPS)
+
 
 	glutMainLoop();
 	return 0;
