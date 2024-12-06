@@ -5,9 +5,9 @@ C:\Users\Omart\Desktop\GUC\DoomDungeon\TextureBuilder.h(27,52): warning C4244: '
 C:\Users\Omart\Desktop\GUC\DoomDungeon\TextureBuilder.h(28,52): warning C4244: 'argument': conversion from 'int' to 'GLfloat', possible loss of data
   (compiling source file 'OpenGLMeshLoader.cpp')
   
-C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1284,40): warning C4838: conversion from 'double' to 'GLfloat' requires a narrowing conversion
-C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1284,77): warning C4838: conversion from 'double' to 'GLfloat' requires a narrowing conversion
-C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1323,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(2513,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1375,40): warning C4838: conversion from 'double' to 'GLfloat' requires a narrowing conversion
+C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1375,79): warning C4838: conversion from 'double' to 'GLfloat' requires a narrowing conversion
+C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(1438,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Omart\Desktop\GUC\DoomDungeon\OpenGLMeshLoader.cpp(2790,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 GLTexture.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
   OpenGLMeshLoader.vcxproj -> C:\Users\Omart\Desktop\GUC\DoomDungeon\Debug\OpenGLMeshLoader19.exe

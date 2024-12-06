@@ -23,7 +23,6 @@ void PlayCollisionSound(const char* filename);
 void printPlayerPosition();
 void updateJump();
 
-
 class Vector3f {
 public:
 	float x, y, z;
@@ -53,13 +52,14 @@ bool isForehand = false;  // Whether forehand motion is happening
 float forehandAngle = 0.0f;  // The angle of the forehand motion
 float forehandSpeed = 2.0f;  // Speed at which the forehand swing occurs
 
-int score = 500;
+int score = 0;
+int scoretemp = 0;
 bool ballHit = false;
 bool ballHit2 = false;
 float ballRadius = 0.5f;
 bool gameWin = false;
 bool gameLost = false;
-int timer = 3000;
+int timer = 100;
 
 float lastFrameTime = 0.0f;
 
@@ -82,6 +82,7 @@ Model_3DS model_door2;
 Model_3DS model_swtrap;
 Model_3DS model_gem;
 Model_3DS model_map;
+Model_3DS model_coin2;
 
 GLTexture tex_crate;
 GLTexture tex_floor;
@@ -89,7 +90,10 @@ GLTexture tex_wall1;
 GLTexture tex_barell;
 GLTexture tex_wall2;
 GLTexture tex_floor2;
+GLTexture tex_lantern;
 
+float lantern1X = -3.9f, lantern1Y = 4.0f, lantern1Z = -13.0f; // Lantern for light 0
+float lantern2X = -4.3f, lantern2Y = 4.3f, lantern2Z = -10.5f; // Lantern for light 2
 
 
 class Camera {
@@ -186,10 +190,18 @@ public:
 		glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
 
 		// Scale the model
-		glScalef(4.0f, 4.0f, 4.0f); // Adjust scaling as needed
 
+		if (currentGameState == PLAYING) {
+			glScalef(4.0f, 4.0f, 4.0f); // Adjust scaling as needed
+			model_coin.Draw(); // Render the .3ds model
+
+		}
+		if (currentGameState == LEVEL2_PLAYING) {
+			glScalef(0.2f, 0.2f, 0.2f); // Adjust scaling as needed
+			model_coin2.Draw();
+		}
 		// Draw the coin model
-		model_coin.Draw(); // Render the .3ds model
+		//model_coin.Draw(); // Render the .3ds model
 		// Reset emissive material to turn off glow effect for other objects
 		GLfloat noEmission[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, noEmission);
@@ -229,7 +241,7 @@ public:
 			collected = true; // Mark the coin as collected
 			score += 100; // Increase score by 100
 			std::cout << "Coin collected! Score: " << score << std::endl;
-
+			PlayCollisionSound("sounds/sword-sound-effect-2-234986.wav");
 			// Optionally, you can play a sound effect
 			// PlaySoundEffect("coin_collect.wav");
 		}
@@ -258,6 +270,9 @@ Coin coin19(-1.2f, 7.3f, -0.1f, 0.3f);
 Coin coin20(-1.7f, 7.3f, -7.7f, 0.3f);
 Coin coin21(4.7f, 7.3f, -6.3f, 0.3f);
 Coin coin22(3.7f, 7.3f, -12.3f, 0.3f);
+
+bool playerHurt = false;
+float hurtTimer = 0.0f; // Timer to track how long the player stays red
 
 class Trap {
 public:
@@ -336,7 +351,10 @@ public:
 				// Check if player is above the trap
 				if (playerY <= y) {
 					playerHealth -= 1; // Decrease player health
+					playerHurt = true; // Set hurt state
+					hurtTimer = 1.0f; // Flash red for 1 second
 					std::cout << "Player hit by trap! Health: " << playerHealth << std::endl;
+					PlayCollisionSound("sounds/male-scream-in-fear-123079.wav");
 					if (playerHealth <= 0) {
 						std::cout << "Player is dead!" << std::endl;
 						gameLost = true;
@@ -405,6 +423,8 @@ Trap trap43(2.7f, 1.0f, -29.2f, 2.0f, 0.5f, 0.6f, 0.01f);
 Trap trap44(4.8f, 1.0f, -29.2f, 2.0f, 0.5f, 0.6f, 0.01f);
 Trap trap45(5.7f, 1.0f, -29.2f, 2.0f, 0.5f, 0.6f, 0.01f);
 
+
+
 class AncientKey {
 public:
 	float x, y, z;
@@ -420,30 +440,66 @@ public:
 		// Calculate the vertical offset using a sine wave for smooth up and down movement
 		float verticalOffset = 0.2f * sin(time);
 
+		// Calculate the rotation angle for spinning effect
+		float rotationAngle = fmod(time * 50.0f, 360.0f); // Adjust speed with factor 50.0f
+
+		// Calculate the glow intensity for the key (varies between 0.8 and 1.1 for a visible pulse)
+		float glowIntensity = 0.8f + 0.3f * sin(time * 3.0f);
+
+		// Set emissive material for the glowing key effect
+		GLfloat emissiveMaterial[] = { glowIntensity, glowIntensity * 0.9f, 0.3f, 1.0f }; // Warm yellow glow
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emissiveMaterial);
+
+		// Push transformation matrix for the key
 		glPushMatrix();
-		glTranslatef(x, y + verticalOffset + 0.2, z); // Apply the vertical offset
 
-		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+		// Position the key with vertical movement
+		glTranslatef(x, y + verticalOffset + 0.2, z);
 
-		// Reset material properties (use white diffuse and ambient to avoid color influence)
-		GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
-		GLfloat defaultShininess = 0.0f;
+		// Rotate the key around its Y-axis for a spinning effect
+		glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+		// Scale the model
+		glScalef(1.0f, 1.0f, 1.0f); // Adjust scaling as needed
 
-		// Draw the coin model
-		glScalef(1.0f, 1.0f, 1.0f); // Scale the model as needed
-		model_key.Draw();
+		// Draw the key model
+		model_key.Draw(); // Render the key model
 
+		// Reset emissive material to turn off the glow effect for other objects
+		GLfloat noEmission[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, noEmission);
+
+		// Pop transformation matrix for the key
 		glPopMatrix();
-		glDisable(GL_TEXTURE_2D);
+
+		// Add a soft halo effect around the key using blending
+		glDisable(GL_LIGHTING); // Disable lighting for the halo
+		glEnable(GL_BLEND);     // Enable blending for transparency
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE); // Additive blending for the halo
+
+		// Calculate halo brightness (varies with time)
+		float haloBrightness = 0.2f + 0.2f * fabs(sin(time * 2.0f)); // Varies between 0.2 and 0.4
+
+		glPushMatrix();
+
+		// Position the halo slightly above the key
+		glTranslatef(x, y + verticalOffset + 0.2, z);
+
+		// Use a semi-transparent yellowish color for the halo
+		glColor4f(1.0f, 0.9f, 0.4f, haloBrightness); // Brightness modulates alpha
+
+		// Render the halo as a glowing sphere
+		glutSolidSphere(radius * 1.8f, 32, 32); // Slightly larger than the key
+
+		// Pop transformation matrix for the halo
+		glPopMatrix();
+
+		// Restore lighting and blending states
+		glDisable(GL_BLEND); // Disable blending
+		glEnable(GL_LIGHTING); // Re-enable lighting
 	}
+
+
 
 	void checkCollision(float playerX, float playerZ) {
 		if (collected) return; // Skip if the key is already collected
@@ -455,6 +511,9 @@ public:
 		if (distance < radius + 0.5f) { // Assuming player radius is 0.5f
 			collected = true; // Mark the key as collected
 			std::cout << "Ancient Key collected!" << std::endl;
+			PlayCollisionSound("sounds/opening-metal-door-199581");
+
+			//PlayCollisionSound("sounds/collect-ring-15982.wav");
 
 		}
 	}
@@ -524,6 +583,8 @@ public:
 
 			// Optionally, you can play a sound effect
 			// PlaySoundEffect("coin_collect.wav");
+			PlayCollisionSound("sounds/collect-ring-15982.wav");
+
 		}
 	}
 };
@@ -587,7 +648,7 @@ public:
 			collected = true; // Mark the gem as collected
 			//score += 200; // Increase score by 200
 			std::cout << "Gem collected! Score: " << score << std::endl;
-
+			PlayCollisionSound("sounds/magic-charge-mana-2-186628.wav");
 			// Optionally, you can play a sound effect
 			// PlaySoundEffect("gem_collect.wav");
 		}
@@ -677,6 +738,7 @@ public:
 		// Check if the player is within the bounds of the crate
 		if (playerX + playerRadius > x - halfWidth && playerX - playerRadius < x + halfWidth &&
 			playerZ + playerRadius > z - halfDepth && playerZ - playerRadius < z + halfDepth) {
+			PlayCollisionSound("sounds/doorhit-98828.wav");
 			return true;
 		}
 		return false;
@@ -1020,8 +1082,13 @@ public:
 		if (distance < radius + 1.5f) { // Assuming player radius is 0.5f
 			hit = true; // Mark the trap as hit
 			playerHealth -= 1; // Decrement player health by 10
+			if (playerHealth <= 0) {
+				gameLost = true;
+			}
+			playerHurt = true; // Set hurt state
+			hurtTimer = 1.0f; // Flash red for 1 second
 			std::cout << "Player hit by trap! Health: " << playerHealth << std::endl;
-
+			PlayCollisionSound("sounds/male-scream-in-fear-123079.wav");
 			// Optionally, you can play a sound effect
 			// PlayCollisionSound("trap_hit.wav");
 		}
@@ -1135,6 +1202,7 @@ public:
 				}
 			}
 		}
+		//PlayCollisionSound("sounds/opening-metal-door-199581");
 
 	}
 
@@ -1225,7 +1293,7 @@ public:
 
 			// Draw the cube behind the door
 			glPushMatrix();
-			glTranslatef(cubePosition.x, cubePosition.y, cubePosition.z - 6);
+			glTranslatef(cubePosition.x +0.5, cubePosition.y, cubePosition.z - 6);
 			glColor3f(1.0f, 1.0f, 1.0f); // Blue color for the cube
 			glutSolidCube(cubeSize);
 			glPopMatrix();
@@ -1242,6 +1310,7 @@ public:
 				if (openAngle >= 90.0f) {
 					openAngle = 90.0f;
 					isOpen = true;
+					PlayCollisionSound("sounds/level-win-6416.wav");
 				}
 			}
 		}
@@ -1263,7 +1332,7 @@ public:
 };
 
 // Example usage
-Door door(0.8f, 0.0f, -39.1f, 2.0f, 4.0f, 1.5f);
+Door door(0.8f, 0.0f, -39.1f, 2.0f, 4.0f, 2.5f);
 Door2 door2(0.0f, 15.4f, 3.9f, 2.0f, 4.0f, 1.5f);
 
 void updateDoor(int value) {
@@ -1292,6 +1361,8 @@ float legAngle = 0.0f;  // Angle for leg movement (for walking effect)
 bool legMovingForward = true;  // Direction of leg movement (for walking)
 
 void drawPlayer() {
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Get the elapsed time
+
 	glPushMatrix();
 	glTranslatef(playerX, playerY + 0.2, playerZ); // Player's position
 	glRotatef(playerAngle + 180, 0.0f, 1.0f, 0.0f); // Rotate player to face the camera's view direction
@@ -1301,13 +1372,36 @@ void drawPlayer() {
 	glLightfv(GL_LIGHT1, GL_POSITION, playerLightPosition);
 
 	// Update spotlight direction (parallel to the XZ plane)
-	GLfloat playerLightDirection[] = { sin(DEG2RAD(playerAngle+180)), 0.0f, cos(DEG2RAD(playerAngle)) };
+	GLfloat playerLightDirection[] = { sin(DEG2RAD(playerAngle + 180)), 0.0f, cos(DEG2RAD(playerAngle)) };
 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, playerLightDirection);
 
-	// Draw the player model
-	glColor3f(1.0f, 1.0f, 1.0f);
+	// Flashing effect when the player is hurt
+	if (playerHurt) {
+		// Flash red: alternate between red and normal color based on time
+		if (fmod(time, 0.2f) < 0.1f) { // Change color every 0.1 seconds
+			if (currentGameState == PLAYING) {
+				glColor3f(1.0f, 0.0f, 0.0f); // Flash red
+			}
+			else {
+				glColor3f(0.0f, 0.0f, 1.0f); 
+			}
+		}
+		else {
+			glColor3f(1.0f, 1.0f, 1.0f); // Return to normal color
+		}
+
+		hurtTimer -= time; // Decrease the timer
+		if (hurtTimer <= 0.0f) {
+			playerHurt = false; // End the hurt state
+		}
+	}
+	else {
+		glColor3f(1.0f, 1.0f, 1.0f); // Normal color if not hurt
+	}
+
 	glEnable(GL_TEXTURE_2D);
 
+	// Set material properties
 	GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	GLfloat defaultAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
@@ -1319,6 +1413,7 @@ void drawPlayer() {
 	glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
 }
+
 
 void renderText(float x, float y, const char* text) {
 	glDisable(GL_LIGHTING);
@@ -1490,6 +1585,107 @@ void drawCourt() {
 
 	// Disable texturing
 	glDisable(GL_TEXTURE_2D);
+}
+
+void drawLantern(float x, float y, float z) {
+	GLUquadric* quad = gluNewQuadric();
+
+	glPushMatrix();
+	glTranslatef(x, y, z); // Position the lantern
+	// Enable and use the texture
+	glEnable(GL_TEXTURE_2D);
+	tex_lantern.Use(); // Use the texture
+
+	// ** Base of the Lantern **
+	glColor3f(1.0f, 1.0f, 1.0f); // White color for texture to show
+	glPushMatrix();
+	glTranslatef(0.0f, -0.5f, 0.0f);
+	glScalef(0.5f, 0.1f, 0.5f); // Flattened base
+	glBegin(GL_QUADS);
+	// Texture coordinates for each face of the cube base
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.0f, -0.5f); // Bottom-left
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.0f, -0.5f); // Bottom-right
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.0f, 0.5f); // Top-right
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.0f, 0.5f); // Top-left
+	glEnd();
+	glPopMatrix();
+
+	// ** Central Pole (Cylinder) **
+	glPushMatrix();
+	gluQuadricTexture(quad, GL_TRUE); // Enable texture mapping for quadric
+	gluCylinder(quad, 0.1f, 0.1f, 1.0f, 32, 32); // Thin vertical pole
+	glPopMatrix();
+
+	// ** Lantern Frame (Top and Bottom Rings) **
+	glPushMatrix();
+	glTranslatef(0.0f, 0.6f, 0.0f); // Position for the top ring
+	gluQuadricTexture(quad, GL_TRUE);
+	gluDisk(quad, 0.2f, 0.25f, 32, 1); // Disk for the top ring
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0f, -0.1f, 0.0f); // Position for the bottom ring
+	gluQuadricTexture(quad, GL_TRUE);
+	gluDisk(quad, 0.2f, 0.25f, 32, 1); // Disk for the bottom ring
+	glPopMatrix();
+
+	// ** Glass Body (Transparent Cylinder) **
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glPushMatrix();
+	glColor4f(1.0f, 1.0f, 1.0f, 0.5f); // Semi-transparent to allow glass look
+	gluQuadricTexture(quad, GL_TRUE);  // Texture applied to glass
+	gluCylinder(quad, 0.2f, 0.2f, 0.6f, 32, 32); // Transparent cylinder
+	glPopMatrix();
+	glDisable(GL_BLEND);
+
+	// ** Handle (Thin Cylinder) **
+	glPushMatrix();
+	glTranslatef(0.0f, 0.9f, 0.0f); // Raise the handle above the top
+	glRotatef(90, 1.0f, 0.0f, 0.0f); // Rotate to form an arch
+	gluQuadricTexture(quad, GL_TRUE);
+	gluCylinder(quad, 0.02f, 0.02f, 0.5f, 16, 16); // Thin cylinder for handle
+	glPopMatrix();
+
+	// Disable texture and cleanup
+	glDisable(GL_TEXTURE_2D);
+
+	// ** Light Bulb Inside the Lantern **
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT3);
+
+	GLfloat lightPosition[] = { x, y + 0.3f, z, 1.0f };
+	GLfloat lightDiffuse[] = { 0.3f, 0.3f, 0.2f, 1.0f };  // Dimmer warm light
+	GLfloat lightAmbient[] = { 0.1f, 0.1f, 0.05f, 1.0f }; // Very soft ambient glow
+	GLfloat lightSpecular[] = { 0.3f, 0.3f, 0.2f, 1.0f }; // Reduced specular highlight
+
+	glLightfv(GL_LIGHT3, GL_POSITION, lightPosition);
+	glLightfv(GL_LIGHT3, GL_DIFFUSE, lightDiffuse);
+	glLightfv(GL_LIGHT3, GL_AMBIENT, lightAmbient);
+	glLightfv(GL_LIGHT3, GL_SPECULAR, lightSpecular);
+
+	glColor3f(1.0f, 0.9f, 0.6f); // Bulb color
+	glPushMatrix();
+	glTranslatef(0.0f, 0.3f, 0.0f); // Position the bulb inside
+	gluSphere(quad, 0.1f, 32, 32); // Sphere as the light bulb
+	glPopMatrix();
+
+	// ** Glow Effect (Halo) **
+	glDisable(GL_LIGHTING); // Disable standard lighting for the glow
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 0.9f, 0.6f, 0.2f); // Fainter glow effect
+
+	glPushMatrix();
+	glTranslatef(0.0f, 0.3f, 0.0f); // Same position as the light bulb
+	glutSolidSphere(0.3f, 32, 32);  // Larger semi-transparent sphere for glow
+	glPopMatrix();
+
+	glDisable(GL_BLEND);
+	glEnable(GL_LIGHTING); // Re-enable lighting
+
+	gluDeleteQuadric(quad);
+	glPopMatrix();
 }
 
 
@@ -1753,37 +1949,37 @@ void drawEnv1() {
 	// Back wall
 	glPushMatrix();
 	glTranslatef(-3.7f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(4.5, 10.0, 0.2);
+	drawWall(4.5, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(3.7f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(4.5, 10.0, 0.2);
+	drawWall(4.5, 27.0, 0.2);
 	glPopMatrix();
 
 	// Left wall
 	glPushMatrix();
 	glTranslatef(-6.0f, 1.0f, 0.0f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(27.0, 10.0, 0.2);
+	drawWall(27.0, 27.0, 0.2);
 	glPopMatrix();
 
 	// Right wall
 	glPushMatrix();
 	glTranslatef(6.0f, 1.0f, -7.5f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(11.5, 10.0, 0.2);
+	drawWall(11.5, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(6.0f, 1.0f, 7.5f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(11.5, 10.0, 0.2);
+	drawWall(11.5, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.0f, 1.0f, 13.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 10.0, 0.2);
+	drawWall(12.0, 27.0, 0.2);
 	glPopMatrix();
 
 	//------------------------
@@ -1791,18 +1987,18 @@ void drawEnv1() {
 	glPushMatrix();
 	glTranslatef(21.0f, 1.0f, 0.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 10.0, 0.2);
+	drawWall(21.0, 27.0, 0.2);
 	glPopMatrix();
 
 	// Back wall
 	glPushMatrix();
 	glTranslatef(15.0f, 1.0f, -10.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 10.0, 0.2);
+	drawWall(12.0, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(15.0f, 1.0f, 10.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 10.0, 0.2);
+	drawWall(12.0, 27.0, 0.2);
 	glPopMatrix();
 
 	//--------------------
@@ -1810,21 +2006,21 @@ void drawEnv1() {
 	glTranslatef(0.0f, 0.0f, -27.0f);
 	glPushMatrix();
 	glTranslatef(0.0f, 1.0f, -13.4f);  // Adjusted to match the court boundary
-	drawWall(12.0, 10.0, 0.2);
+	drawWall(12.0, 27.0, 0.2);
 	glPopMatrix();
 
 	// Left wall
 	glPushMatrix();
 	glTranslatef(-6.0f, 1.0f, -3.0f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 10.0, 0.2);
+	drawWall(21.0, 27.0, 0.2);
 	glPopMatrix();
 
 	// Right wall
 	glPushMatrix();
 	glTranslatef(6.0f, 1.0f, -3.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(21.0, 10.0, 0.2);
+	drawWall(21.0, 27.0, 0.2);
 	glPopMatrix();
 	glPopMatrix();
 
@@ -1832,12 +2028,12 @@ void drawEnv1() {
 
 	glPushMatrix();
 	glTranslatef(-3.8f, 1.0f, -19.6f);  // Adjusted to match the court boundary
-	drawWall(4.5, 10.0, 0.2);
+	drawWall(4.5, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(3.8f, 1.0f, -19.6f);  // Adjusted to match the court boundary
-	drawWall(4.5, 10.0, 0.2);
+	drawWall(4.5, 27.0, 0.2);
 	glPopMatrix();
 
 	//_-------------------------
@@ -1845,25 +2041,25 @@ void drawEnv1() {
 	glPushMatrix();
 	glTranslatef(9.0f, 1.0f, -6.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(8.6, 10.0, 0.2);
+	drawWall(8.6, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(9.0f, 1.0f, 6.0f);    // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(8.6, 10.0, 0.2);
+	drawWall(8.6, 27.0, 0.2);
 	glPopMatrix();
 
 	//------------------------------
 
 	glPushMatrix();
 	glTranslatef(7.6f, 1.0f, 1.8f);  // Adjusted to match the court boundary
-	drawWall(3.0, 10.0, 0.2);
+	drawWall(3.0, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(7.6f, 1.0f, -1.8f);  // Adjusted to match the court boundary
-	drawWall(3.0, 10.0, 0.2);
+	drawWall(3.0, 27.0, 0.2);
 	glPopMatrix();
 
 	//-------------------------------------------
@@ -1871,13 +2067,13 @@ void drawEnv1() {
 	glPushMatrix();
 	glTranslatef(-1.5f, 1.0f, -16.5f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(6.0, 10.0, 0.2);
+	drawWall(6.0, 27.0, 0.2);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(1.5f, 1.0f, -16.5f);   // Adjusted to match the court boundary
 	glRotatef(90, 0, 1, 0);
-	drawWall(6.0, 10.0, 0.2);
+	drawWall(6.0, 27.0, 0.2);
 	glPopMatrix();
 
 
@@ -1892,6 +2088,11 @@ void drawEnv2() {
 	glPushMatrix();
 	glTranslatef(0.0f, 3.0f, -13.4f);  // Adjusted to match the court boundary
 	drawWall(12.0, 6.0, 0.1);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0f, 3.0f, 13.4f);  // Adjusted to match the court boundary
+	drawWall(12.0, 1.5, 0.1);
 	glPopMatrix();
 
 	// Left wall
@@ -1922,7 +2123,7 @@ void resetPlayerPosition() {
 		//playerZ = 10.0f;
 		//playerAngle = 0.0f;
 		playerY = 12.4f;
-
+		PlayCollisionSound("sounds/dorm-door-opening-6038.wav");
 	}
 
 }
@@ -1940,16 +2141,17 @@ void setupLights() {
 	glLightfv(GL_LIGHT1, GL_SPECULAR, playerLightSpecular);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, playerLightAmbient);
 
-	// Spotlight parameters
 	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0f);   // Narrow cone angle
 	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 500.0f); // Focused beam for a bright center
 
 	glEnable(GL_LIGHT1);
 
-	// PLAYING environment light (GL_LIGHT0)
+	// Set the position for light 0 (PLAYING environment light)
 	if (currentGameState == PLAYING) {
+		GLfloat playingLightPosition[] = { lantern1X, lantern1Y, lantern1Z, 1.0f }; // Position of the lantern
 		GLfloat playingLightDiffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f }; // Moderate intensity
 		GLfloat playingLightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // Slight ambient component
+		glLightfv(GL_LIGHT0, GL_POSITION, playingLightPosition);
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, playingLightDiffuse);
 		glLightfv(GL_LIGHT0, GL_AMBIENT, playingLightAmbient);
 		glEnable(GL_LIGHT0);
@@ -1958,11 +2160,11 @@ void setupLights() {
 		glDisable(GL_LIGHT0); // Disable PLAYING light in other states
 	}
 
-	// LEVEL2_PLAYING environment light (GL_LIGHT2)
+	// Set the position for light 2 (LEVEL2_PLAYING environment light)
 	if (currentGameState == LEVEL2_PLAYING) {
-		static bool highIntensity = true; // Alternating state
-
+		GLfloat level2LightPosition[] = { lantern2X, lantern2Y, lantern2Z, 1.0f }; // Position of the lantern
 		GLfloat level2LightDiffuse[4];
+		static bool highIntensity = true; // Alternating state
 		if (highIntensity) {
 			level2LightDiffuse[0] = 0.5f; // Reddish light with moderate intensity
 			level2LightDiffuse[1] = 0.1f;
@@ -1974,8 +2176,8 @@ void setupLights() {
 			level2LightDiffuse[2] = 0.05f;
 		}
 		level2LightDiffuse[3] = 1.0f; // Alpha
-
 		GLfloat level2LightAmbient[] = { 0.1f, 0.05f, 0.05f, 1.0f }; // Minimal ambient red
+		glLightfv(GL_LIGHT2, GL_POSITION, level2LightPosition);
 		glLightfv(GL_LIGHT2, GL_DIFFUSE, level2LightDiffuse);
 		glLightfv(GL_LIGHT2, GL_AMBIENT, level2LightAmbient);
 
@@ -2023,16 +2225,17 @@ void updateWallColor(int value) {
 }
 
 bool followPlayer = false; // Flag to indicate if the camera should follow the player
+bool followPlayer2 = true; // Flag to indicate if the camera should follow the player
+
 float zz = 3.0f;
 
 void updateCameraPosition() {
-	if (followPlayer) {
+	if (!followPlayer2) {
 		// Set the camera's position to the player's head position
 		camera.setView(playerX, playerY + 3.8f, playerZ, playerX - sin(DEG2RAD(playerAngle)), playerY + 3.4f, playerZ - cos(DEG2RAD(playerAngle)));
 	}
 }
 
-bool followPlayer2 = false; // Flag to indicate if the camera should follow the player
 void updateCameraPosition2() {
 	if (followPlayer2) {
 		// Set the camera's position to the player's head position
@@ -2276,36 +2479,36 @@ void checkGem() {
 void drawCratesModels(){
 	cratem1.draw();
 	cratem2.draw();
-	cratem3.draw();
+	//cratem3.draw();
 	cratem4.draw();
-	cratem5.draw();
+	//cratem5.draw();
 	cratem6.draw();
 	cratem7.draw();
-	cratem8.draw();
+	//cratem8.draw();
 	cratem9.draw();
 	cratem10.draw();
-	cratem11.draw();
+	//cratem11.draw();
 	cratem12.draw();
 	cratem13.draw();
-	cratem14.draw();
+	//cratem14.draw();
 	cratem15.draw();
 	cratem16.draw();
-	cratem17.draw();
+	//cratem17.draw();
 	cratem18.draw();
-	cratem19.draw();
+	//cratem19.draw();
 	cratem20.draw();
-	cratem21.draw();
+	//cratem21.draw();
 	cratem22.draw();
-	cratem23.draw();
+	//cratem23.draw();
 	cratem24.draw();
-	cratem25.draw();
+	//cratem25.draw();
 	cratem26.draw();
 	cratem27.draw();
-	cratem28.draw();
+	//cratem28.draw();
 	cratem29.draw();
-	cratem30.draw();
+	//cratem30.draw();
 	cratem31.draw();
-	cratem32.draw();
+	//cratem32.draw();
 	cratem33.draw();
 	cratem34.draw();
 }
@@ -2497,13 +2700,40 @@ void updateJump() {
 	glutPostRedisplay();
 }
 
+void checklevel2start() {
+	if (door.isOpen) {
+		Vector3f playerpos = Vector3f(playerX, playerY, playerZ);
+		if (playerX >= 0.4f && playerX <= 2.2f && playerZ >= -40.0f && playerZ <= -37.9f) {
+			PlayCollisionSound("sounds/to-the-void-168958.wav");
+			currentGameState = LEVEL2_START;
+		}
+	}
+}
 
+void checkGameLost() {
+	if (gameLost) {
+		PlayCollisionSound("sounds/game-over-classic-206486.wav");
+
+	}
+}
+
+void checkGameWon() {
+	if (door2.isOpen) {
+		Vector3f playerpos = Vector3f(playerX, playerY, playerZ);
+		if (playerX >= -3.7f && playerX <= 1.6f && playerZ >= 1.5f && playerZ <= 5.5f) {
+			PlaySoundEffect("sounds/level-win-6416.wav");
+			currentGameState = GAME_WON;
+		}
+	}
+}
+bool gameWins = false;
 void Display() {
 	int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
 	int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//currentGameState = LEVEL2_START;
+	PlaySoundEffect("sounds/regularfootstep002-47146.wav");
 
 	switch (currentGameState) {
 	case PLAYING:
@@ -2525,9 +2755,16 @@ void Display() {
 		checkCoinCollision();
 		drawTraps();
 		checkTrapsCollision();
-
+		scoretemp = score;
 		updateJump();
 
+		drawLantern(lantern1X, lantern1Y, lantern1Z);
+
+		updateCameraPosition();
+		updateCameraPosition2();
+
+		//PlaySoundEffect("sounds/regularfootstep002-47146.wav");
+		//PlaySoundEffect("sounds/game-over-classic-206486.wav");
 		/*glPushMatrix();
 		glTranslatef(1.1, 1, 10);
 		glScalef(10.1, 10.1, 10.1);
@@ -2547,32 +2784,34 @@ void Display() {
 		glPopMatrix();
 
 		checkKey();
-
+		checklevel2start();
+		checkGameLost();
 		char scoreText[20];
 		sprintf(scoreText, "Score: %d", score);  // Format score as string
-		renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
-		displayTimer();
+		//renderText(0.8f, 0.9f, scoreText);  // Adjust the position of the score
+		//displayTimer();
 		//door.isOpen = true;
+		//glPushMatrix();
+		//glColor3f(1.0f, 0.0f, 0.0f);
 		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
 		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
-		if (score < 1000) {
-			renderText("You need to collect  " + intToString(1000 - score) + " to find key", windowWidth - 750, windowHeight - 20);
+		renderText("Time Remaining: " + intToString(timer), windowWidth - 1150, windowHeight - 20);
+		//glPopMatrix();
+
+		if (score < 500) {
+			renderText("You need to collect  " + intToString(500 - score) + " to find key", windowWidth - 750, windowHeight - 20);
 		}
 		else {
 			renderText("You have collected enough coins to find the key", windowWidth - 750, windowHeight - 20);
 		}
-
+		if (timer == 0) {
+			gameLost = true;
+		}
 		if (gameLost) {
 			currentGameState = GAME_LOST;
 		}
 		//key1.collected = true;
-		if (door.isOpen) {
-			Vector3f playerpos = Vector3f(playerX, playerY, playerZ);
-			if (playerX >= 0.4f && playerX <= 2.2f && playerZ >= -40.0f && playerZ <= -37.9f) {
-				currentGameState = LEVEL2_START;
-			}
-		}
-
+		
 
 
 		break;
@@ -2583,8 +2822,20 @@ void Display() {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glColor3f(1.0f, 0.0f, 0.0f);
+		//PlaySoundEffect("sounds/game-over-classic-206486.wav");
 		renderText("Game Over", windowWidth / 2 - 50, windowHeight / 2);
-		renderText("Score: " + std::to_string(score), windowWidth / 2 - 50, windowHeight / 2 - 20);
+		renderText("Score: " + std::to_string(scoretemp), windowWidth / 2 - 50, windowHeight / 2 - 20);
+		renderText("Click to Restart", windowWidth / 2 - 50, windowHeight / 2 - 40);
+		break;
+
+	case GAME_WON:
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		//PlaySoundEffect("sounds/level-win-6416.wav");
+		renderText("Game WON!!", windowWidth / 2 - 50, windowHeight / 2);
+		renderText("Score: " + std::to_string(scoretemp), windowWidth / 2 - 50, windowHeight / 2 - 20);
 		renderText("Click to Restart", windowWidth / 2 - 50, windowHeight / 2 - 40);
 		break;
 
@@ -2593,8 +2844,9 @@ void Display() {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glColor3f(1.0f, 0.0f, 0.0f);
+		//PlayCollisionSound("sounds/to-the-void-168958.wav");
 		renderText("LEVEL 1 COMPLETE", windowWidth / 2 - 50, windowHeight / 2);
-		renderText("Score: " + std::to_string(score), windowWidth / 2 - 50, windowHeight / 2 - 20);
+		renderText("Score: " + std::to_string(scoretemp), windowWidth / 2 - 50, windowHeight / 2 - 20);
 		renderText("Click to Start level 2", windowWidth / 2 - 50, windowHeight / 2 - 40);
 		score = 0;
 		break;
@@ -2625,6 +2877,12 @@ void Display() {
 		checkGem();
 		//drawTraps();
 		//checkTrapsCollision();
+		drawLantern(lantern2X, lantern2Y, lantern2Z);
+		scoretemp = score;
+
+		updateCameraPosition();
+		updateCameraPosition2();
+		//PlaySoundEffect("sounds/regularfootstep002-47146.wav");
 
 		/*glPushMatrix();
 		glTranslatef(0.0, 15.4, 3.9);
@@ -2632,13 +2890,13 @@ void Display() {
 		glRotatef(90.0f, 0, 1, 0);
 		model_door1.Draw();
 		glPopMatrix();*/
-
+		//checkGameWon();
 		glPushMatrix();
 		//glTranslatef(2, 1, 10);
 		//glScalef(0.02, 0.02, 0.02);
 		door2.draw();
 		glPopMatrix();
-
+		//checkGameLost();
 		drawCratesModels();
 
 		float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Convert milliseconds to seconds
@@ -2661,8 +2919,17 @@ void Display() {
 		swingingTrap4.draw();
 		swingingTrap4.checkCollision(playerX, playerY, playerZ);
 
+		if (timer == 0) {
+			gameLost = true;
+		}
+		if (gameLost) {
+			currentGameState = GAME_LOST;
+		}
+
 		renderText("Score: " + intToString(score), windowWidth - 100, windowHeight - 20);
 		renderText("Health: " + intToString(playerHealth), windowWidth - 250, windowHeight - 20);
+		renderText("Time Remaining: " + intToString(timer), windowWidth - 1150, windowHeight - 20);
+
 		if (score < 500) {
 			reachedF2 = false;
 			reachedF3 = false;
@@ -2681,7 +2948,9 @@ void Display() {
 		if (door2.isOpen) {
 			Vector3f playerpos = Vector3f(playerX, playerY, playerZ);
 			if (playerX >= -3.7f && playerX <= 1.6f && playerZ >= 1.5f && playerZ <= 5.5f) {
-				currentGameState = LEVEL2_START;
+				gameWins = true;
+				currentGameState = GAME_WON;
+
 			}
 		}
 
@@ -2696,9 +2965,11 @@ void Display() {
 
 void mouseClick(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		if (currentGameState == GAME_LOST) {
+		if (currentGameState == GAME_LOST || currentGameState == GAME_WON) {
 			currentGameState = PLAYING;
 			score = 0;
+			scoretemp = 0;
+			timer = 100;
 			playerHealth = 100;
 			gameLost = false;
 			resetCoins();
@@ -2709,6 +2980,7 @@ void mouseClick(int button, int state, int x, int y) {
 		if (currentGameState == LEVEL2_START) {
 			currentGameState = LEVEL2_PLAYING;
 			score = 0;
+			timer = 100;
 			playerHealth = 100;
 			gameLost = false;
 			resetCoins();
@@ -2722,6 +2994,11 @@ void mouseClick(int button, int state, int x, int y) {
 			std::cout << "i am jumping" << std::endl;
 			startX = playerX;
 			startZ = playerZ;
+		}
+	}
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		if (currentGameState == PLAYING || currentGameState == LEVEL2_PLAYING) {
+			followPlayer2 = !followPlayer2;
 		}
 	}
 }
@@ -2782,6 +3059,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		playerAngle = 0.0f;  // Face forward
 		newPlayerZ -= stepSize;  // Move forward in the Z direction
 		zz = 3.0f;
+		//PlayCollisionSound("sounds/regularfootstep002-47146.wav");
 		break;
 
 	case 'j':  // Move backward and face backward (180 degrees)
@@ -2828,7 +3106,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	else {
 		std::cout << "Collision detected! Player cannot move in this direction." << std::endl;
 	}
-	if (newPlayerX >= courtMinX && newPlayerX <= courtMaxX && newPlayerZ >= courtMinZ && newPlayerZ <= courtMaxZ && /*!checkAllCratesBarrelsCollisions2(newPlayerX, newPlayerZ) &&*/ currentGameState == LEVEL2_PLAYING) {
+	if (newPlayerX >= courtMinX && newPlayerX <= courtMaxX && newPlayerZ >= courtMinZ && newPlayerZ <= courtMaxZ && !checkAllCratesBarrelsCollisions2(newPlayerX, newPlayerZ) && currentGameState == LEVEL2_PLAYING) {
 		// If the new position is valid, update the player's position
 		playerX = newPlayerX;
 		playerZ = newPlayerZ;
@@ -2894,6 +3172,8 @@ void LoadAssets()
 	model_door2.Load("Models/door/d.3ds");
 	model_gem.Load("Models/gem/gem.3ds");
 	model_map.Load("Models/map/map.3ds");
+	model_coin2.Load("Models/coin2/coin3.3ds");
+
 
 	tex_crate.Load("Textures/crate.bmp");
 	tex_floor.Load("Textures/floor.bmp");
@@ -2902,8 +3182,8 @@ void LoadAssets()
 	tex_wall1.Load("Textures/walls11.bmp");
 	tex_wall2.Load("Textures/walls2.bmp");
 	tex_floor2.Load("Textures/floor2.bmp");
+	tex_lantern.Load("Textures/lantern.bmp");
 
-	loadBMP(&tex, "Textures/sky.bmp", true);
 }
 
 
