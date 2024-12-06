@@ -81,6 +81,7 @@ Model_3DS model_door1;
 Model_3DS model_door2;
 Model_3DS model_swtrap;
 Model_3DS model_gem;
+Model_3DS model_map;
 
 GLTexture tex_crate;
 GLTexture tex_floor;
@@ -165,37 +166,57 @@ public:
 		// Calculate the vertical offset using a sine wave for smooth up and down movement
 		float verticalOffset = 0.2f * sin(time);
 
-		// Calculate the glow intensity using a sine wave
-		float glowIntensity = 0.75f + 0.25f * sin(time * 2.0f); // Varies between 0.75 and 1.0
+		// Calculate the rotation angle for spinning
+		float rotationAngle = fmod(time * 100.0f, 360.0f); // Rotation speed factor: 100.0f
 
+		// Calculate the glow intensity using a sine wave for pulsing effect
+		float glowIntensity = 0.8f + 0.2f * sin(time * 3.0f); // Varies between 0.8 and 1.0
+
+		// Set emissive material for the glow effect
+		GLfloat emissiveMaterial[] = { glowIntensity, glowIntensity * 0.85f, 0.0f, 1.0f }; // Golden glow
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emissiveMaterial);
+
+		// Push transformation matrix
 		glPushMatrix();
-		glTranslatef(x, y + verticalOffset, z); // Apply the vertical offset
 
-		// Reset OpenGL state before drawing
-		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
-		glColor4f(glowIntensity, glowIntensity, glowIntensity, 1.0f); // Apply the glow effect
+		// Position the coin with vertical movement
+		glTranslatef(x, y + verticalOffset, z);
 
-		// Reset material properties (use white diffuse and ambient to avoid color influence)
-		GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
-		GLfloat defaultShininess = 0.0f;
+		// Rotate the coin around its y-axis for spinning effect
+		glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+		// Scale the model
+		glScalef(4.0f, 4.0f, 4.0f); // Adjust scaling as needed
 
 		// Draw the coin model
-		glScalef(4.0f, 4.0f, 4.0f); // Scale the model as needed
 		model_coin.Draw(); // Render the .3ds model
+
+		// Reset emissive material to turn off glow effect for other objects
+		GLfloat noEmission[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, noEmission);
+
+		// Pop transformation matrix
+		glPopMatrix();
+
+		// Add a soft halo effect using blending
+		glDisable(GL_LIGHTING); // Disable lighting for halo
+		glEnable(GL_BLEND);     // Enable blending for transparency
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE); // Additive blending for the halo
+
+		glPushMatrix();
+
+		// Position the halo slightly above the coin
+		glTranslatef(x, y + verticalOffset, z);
+
+		// Use a semi-transparent golden-yellow color for the halo
+		glColor4f(1.0f, 0.85f, 0.0f, 0.2f); // Semi-transparent gold
+		glutSolidSphere(radius * 1.5f, 32, 32); // Slightly larger than the coin for halo effect
 
 		glPopMatrix();
 
-		// Reset OpenGL state if needed
-		glDisable(GL_TEXTURE_2D); // Disable 2D texturing if not needed elsewhere
+		glDisable(GL_BLEND); // Disable blending
+		glEnable(GL_LIGHTING); // Re-enable lighting
 	}
-
 
 
 
@@ -287,7 +308,7 @@ public:
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
-		glScalef(8.02f, 8.02f, 1.01f); // Adjust the scale as needed
+		glScalef(4.02f, 8.02f, 1.01f); // Adjust the scale as needed
 		model_trap.Draw();
 		glPopMatrix();
 		glDisable(GL_TEXTURE_2D);
@@ -402,7 +423,7 @@ public:
 		float verticalOffset = 0.2f * sin(time);
 
 		glPushMatrix();
-		glTranslatef(x, y + verticalOffset+0.2, z); // Apply the vertical offset
+		glTranslatef(x, y + verticalOffset + 0.2, z); // Apply the vertical offset
 
 		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
@@ -480,8 +501,8 @@ public:
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
 
 		// Draw the coin model
-		glScalef(4.0f, 4.0f, 4.0f); // Scale the model as needed
-		model_coin.Draw(); // Render the .3ds model
+		glScalef(0.60f, 0.60f, 0.30f); // Scale the model as needed
+		model_map.Draw(); // Render the .3ds model
 
 		glPopMatrix();
 
@@ -530,7 +551,7 @@ public:
 		float glowIntensity = 0.85f + 0.25f * sin(time * 2.0f); // Varies between 0.75 and 1.0
 
 		glPushMatrix();
-		glTranslatef(x, y + verticalOffset+1, z); // Apply the vertical offset
+		glTranslatef(x, y + verticalOffset + 1, z); // Apply the vertical offset
 
 		// Reset OpenGL state before drawing
 		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
@@ -1007,7 +1028,7 @@ public:
 			glPopMatrix();
 		}
 
-		
+
 	}
 
 	void openDoor() {
@@ -1029,7 +1050,7 @@ public:
 				}
 			}
 		}
-		
+
 	}
 
 	bool checkCollision(Vector3f playerPosition) {
@@ -1088,7 +1109,7 @@ public:
 
 			// Draw the cube behind the door
 			glPushMatrix();
-			glTranslatef(cubePosition.x, cubePosition.y , cubePosition.z - 3);
+			glTranslatef(cubePosition.x, cubePosition.y, cubePosition.z - 3);
 			glColor3f(1.0f, 1.0f, 1.0f); // Blue color for the cube
 			glutSolidCube(cubeSize);
 			glPopMatrix();
@@ -1129,7 +1150,7 @@ public:
 	}
 
 	void openDoor() {
-	
+
 		if (gem1.collected && currentGameState == LEVEL2_PLAYING) {
 			if (openAngle < 90.0f) {
 				openAngle += 0.5f; // Adjust the speed of opening as needed
@@ -1185,43 +1206,34 @@ float jumpHeight = 10.0f;
 float legAngle = 0.0f;  // Angle for leg movement (for walking effect)
 bool legMovingForward = true;  // Direction of leg movement (for walking)
 
-// Draw the player at its current position and orientation
 void drawPlayer() {
-	// Compute the direction the camera is facing
-	Vector3f cameraView = (camera.center - camera.eye).unit(); // Camera's view vector
-	float cameraAngle = atan2(cameraView.z, cameraView.x) * (180.0f / M_PI); // Convert to degrees
-
-	// Set the player's angle based on the camera's orientation (invert direction)
-	playerAngle = -cameraAngle;
-	std::cout << "camera angle : " << cameraAngle << std::endl;
-
 	glPushMatrix();
 	glTranslatef(playerX, playerY + 0.2, playerZ); // Player's position
-	glRotatef(playerAngle , 0.0f, 1.0f, 0.0f); // Rotate player to face the camera's view direction
+	glRotatef(playerAngle + 180, 0.0f, 1.0f, 0.0f); // Rotate player to face the camera's view direction
+
+	// Update spotlight position (above the player)
+	GLfloat playerLightPosition[] = { playerX, playerY + 40.0f, playerZ, 40.0f };
+	glLightfv(GL_LIGHT1, GL_POSITION, playerLightPosition);
+
+	// Update spotlight direction (parallel to the XZ plane)
+	GLfloat playerLightDirection[] = { sin(DEG2RAD(playerAngle+180)), 0.0f, cos(DEG2RAD(playerAngle)) };
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, playerLightDirection);
+
 	// Draw the player model
 	glColor3f(1.0f, 1.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D);
 
-	glEnable(GL_TEXTURE_2D); // Enable 2D texturing
-	// Reset material properties (use white diffuse and ambient to avoid color influence)
 	GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
-	GLfloat defaultShininess = 0.0f;
-
+	GLfloat defaultAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
-	glScalef(1.5f, 1.5f, 1.5f); // Scale the player model
+
+	glScalef(1.5f, 1.5f, 1.5f);
 	model_player.Draw();
 
-	glPopMatrix(); // End player transformation
+	glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
-	// glEnable(GL_LIGHTING); // Restore lighting
 }
-
-
-
 
 void renderText(float x, float y, const char* text) {
 	glDisable(GL_LIGHTING);
@@ -1831,20 +1843,75 @@ void resetPlayerPosition() {
 }
 
 void setupLights() {
-	GLfloat ambient[] = { 0.7f, 0.7f, 0.7, 1.0f };
-	GLfloat diffuse[] = { 0.6f, 0.6f, 0.6, 1.0f };
-	GLfloat specular[] = { 1.0f, 1.0f, 1.0, 1.0f };
-	GLfloat shininess[] = { 60 };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+	// Global ambient light: set to darkness
+	GLfloat globalAmbient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
 
-	GLfloat lightIntensity[] = { 2.7f, 2.7f, 1, 1.0f };
-	GLfloat lightPosition[] = { -7.0f, 6.0f, 3.0f, 0.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, lightIntensity);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightIntensity);
+	// Spotlight setup for the player (GL_LIGHT1)
+	GLfloat playerLightDiffuse[] = { 9.0f, 9.0f, 9.0f, 1.0f }; // High intensity
+	GLfloat playerLightSpecular[] = { 9.0f, 9.0f, 9.0f, 1.0f };
+	GLfloat playerLightAmbient[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // No ambient light for the spotlight
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, playerLightDiffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, playerLightSpecular);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, playerLightAmbient);
+
+	// Spotlight parameters
+	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0f);   // Narrow cone angle
+	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 500.0f); // Focused beam for a bright center
+
+	glEnable(GL_LIGHT1);
+
+	// PLAYING environment light (GL_LIGHT0)
+	if (currentGameState == PLAYING) {
+		GLfloat playingLightDiffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f }; // Moderate intensity
+		GLfloat playingLightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // Slight ambient component
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, playingLightDiffuse);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, playingLightAmbient);
+		glEnable(GL_LIGHT0);
+	}
+	else {
+		glDisable(GL_LIGHT0); // Disable PLAYING light in other states
+	}
+
+	// LEVEL2_PLAYING environment light (GL_LIGHT2)
+	if (currentGameState == LEVEL2_PLAYING) {
+		static bool highIntensity = true; // Alternating state
+
+		GLfloat level2LightDiffuse[4];
+		if (highIntensity) {
+			level2LightDiffuse[0] = 0.5f; // Reddish light with moderate intensity
+			level2LightDiffuse[1] = 0.1f;
+			level2LightDiffuse[2] = 0.1f;
+		}
+		else {
+			level2LightDiffuse[0] = 0.2f; // Dimmer reddish light
+			level2LightDiffuse[1] = 0.05f;
+			level2LightDiffuse[2] = 0.05f;
+		}
+		level2LightDiffuse[3] = 1.0f; // Alpha
+
+		GLfloat level2LightAmbient[] = { 0.1f, 0.05f, 0.05f, 1.0f }; // Minimal ambient red
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, level2LightDiffuse);
+		glLightfv(GL_LIGHT2, GL_AMBIENT, level2LightAmbient);
+
+		highIntensity = !highIntensity; // Toggle intensity state for next frame
+		glEnable(GL_LIGHT2);
+	}
+	else {
+		glDisable(GL_LIGHT2); // Disable LEVEL2 light in other states
+	}
 }
+
+
+
+void toggleLevel2Light(int value) {
+	if (currentGameState == LEVEL2_PLAYING) {
+		setupLights(); // Re-setup lights to update alternating intensity
+	}
+	glutTimerFunc(500, toggleLevel2Light, 0); // Toggle every 500ms
+}
+
+
 
 void setupCamera() {
 	glMatrixMode(GL_PROJECTION);
@@ -1871,20 +1938,21 @@ void updateWallColor(int value) {
 }
 
 bool followPlayer = false; // Flag to indicate if the camera should follow the player
+float zz = 3.0f;
 
 void updateCameraPosition() {
 	if (followPlayer) {
 		// Set the camera's position to the player's head position
-		camera.setView(playerX, 1.8f, playerZ, playerX - sin(DEG2RAD(playerAngle)), 1.8f, playerZ - cos(DEG2RAD(playerAngle)));
+		camera.setView(playerX, playerY + 3.8f, playerZ, playerX - sin(DEG2RAD(playerAngle)), playerY + 3.4f, playerZ - cos(DEG2RAD(playerAngle)));
 	}
 }
 
 bool followPlayer2 = false; // Flag to indicate if the camera should follow the player
-
 void updateCameraPosition2() {
 	if (followPlayer2) {
 		// Set the camera's position to the player's head position
-		camera.setView(playerX, 5.2f, playerZ + 3.0, playerX - sin(DEG2RAD(playerAngle)), 3.1f, playerZ - cos(DEG2RAD(playerAngle)));
+
+		camera.setView(playerX, playerY + 5.2f, playerZ +zz , playerX - sin(DEG2RAD(playerAngle)), playerY+3.1f, playerZ - cos(DEG2RAD(playerAngle)));
 	}
 }
 
@@ -2009,7 +2077,7 @@ void drawTraps() {
 	trap12.draw(timeTrap);
 	trap13.draw(timeTrap);
 	trap14.draw(timeTrap);
-	trap15.draw(timeTrap);
+	//trap15.draw(timeTrap);
 	trap16.draw(timeTrap);
 	trap17.draw(timeTrap);
 	trap18.draw(timeTrap);
@@ -2299,6 +2367,8 @@ void updateJump() {
 		playerX = newPlayerX;
 		playerZ = newPlayerZ;
 	}
+	updateCameraPosition();	
+	updateCameraPosition2();
 
 	// Redraw the scene
 	glutPostRedisplay();
@@ -2586,21 +2656,25 @@ void Keyboard(unsigned char key, int x, int y) {
 	case 'u':  // Move forward and face forward (0 degrees)
 		playerAngle = 0.0f;  // Face forward
 		newPlayerZ -= stepSize;  // Move forward in the Z direction
+		zz = 3.0f;
 		break;
 
 	case 'j':  // Move backward and face backward (180 degrees)
 		playerAngle = 180.0f;  // Face backward
 		newPlayerZ += stepSize;  // Move backward in the Z direction
+		zz = -3.0f;
 		break;
 
 	case 'h':  // Move left and face left (90 degrees)
 		playerAngle = 90.0f;  // Face left
 		newPlayerX -= stepSize;  // Move left in the X direction
+		zz = 3.0f;
 		break;
 
 	case 'k':  // Move right and face right (-90 degrees)
 		playerAngle = -90.0f;  // Face right
 		newPlayerX += stepSize;  // Move right in the X direction
+		zz = 3.0f;
 		break;
 	case 'p':
 		followPlayer = !followPlayer; // Toggle the followPlayer flag
@@ -2613,7 +2687,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		exit(EXIT_SUCCESS);
 	}
 	if (((newPlayerX >= -5.6f && newPlayerX <= 5.6f && newPlayerZ >= -13.3f && newPlayerZ <= 13.3f) || // Main room
-		(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
+		//(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
 		(newPlayerX >= 9.2f && newPlayerX <= 20.8f && newPlayerZ >= -10.2f && newPlayerZ <= 10.2f) || // Room 1
 		(newPlayerX >= -1.3f && newPlayerX <= 1.3f && newPlayerZ >= -19.7f && newPlayerZ <= -13.2f) || // Corridor 2
 		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) && // Room 2
@@ -2655,7 +2729,7 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void printPlayerPosition() {
-	std::cout << "Player Position - X: " << playerX << ", Y: " << playerY << ", Z: " << playerZ<< std::endl;
+	std::cout << "Player Position - X: " << playerX << ", Y: " << playerY << ", Z: " << playerZ << std::endl;
 	std::cout << "Player Angle : " << playerAngle << std::endl;
 	std::cout << "door level 2 : " << door2.isOpen << std::endl;
 
@@ -2694,6 +2768,7 @@ void LoadAssets()
 	model_door1.Load("Models/door/door1.3ds");
 	model_door2.Load("Models/door/d.3ds");
 	model_gem.Load("Models/gem/gem.3ds");
+	model_map.Load("Models/map/map.3ds");
 
 	tex_crate.Load("Textures/crate.bmp");
 	tex_floor.Load("Textures/floor.bmp");
@@ -2739,7 +2814,7 @@ int main(int argc, char** argv) {
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+	//glEnable(GL_LIGHT0);
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
 
@@ -2747,7 +2822,7 @@ int main(int argc, char** argv) {
 	LoadAssets();
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+	//glEnable(GL_LIGHT0);
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
 
@@ -2757,6 +2832,7 @@ int main(int argc, char** argv) {
 	glutTimerFunc(1000, timerCallback, 0);
 	glutTimerFunc(16, updateDoor, 0); // Update every 16ms (~60 FPS)
 	glutTimerFunc(16, updateDoor2, 0); // Update every 16ms (~60 FPS)
+	glutTimerFunc(500, toggleLevel2Light, 0); // Start alternating light for LEVEL2
 
 
 	glutMainLoop();
