@@ -190,11 +190,9 @@ public:
 
 		// Draw the coin model
 		model_coin.Draw(); // Render the .3ds model
-
 		// Reset emissive material to turn off glow effect for other objects
 		GLfloat noEmission[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, noEmission);
-
 		// Pop transformation matrix
 		glPopMatrix();
 
@@ -210,7 +208,7 @@ public:
 
 		// Use a semi-transparent golden-yellow color for the halo
 		glColor4f(1.0f, 0.85f, 0.0f, 0.2f); // Semi-transparent gold
-		glutSolidSphere(radius * 1.5f, 32, 32); // Slightly larger than the coin for halo effect
+		glutSolidSphere(radius * 1.8f, 32, 32); // Slightly larger than the coin for halo effect
 
 		glPopMatrix();
 
@@ -596,6 +594,7 @@ public:
 	}
 };
 Gem gem1(-3.0f, 6.5f, 10.0f, 0.5f); // Example gem object with specified position and radius
+Gem gem2(-0.5f, 6.5f, 10.0f, 0.5f); // Example gem object with specified position and radius
 
 
 class Crate {
@@ -607,59 +606,67 @@ public:
 		: x(_x), y(_y), z(_z), width(_width), height(_height), depth(_depth) {}
 
 	void draw() {
-		glPushMatrix();
-		glTranslatef(x, y, z);
+		
+		
+			glPushMatrix();
+			glTranslatef(x, y, z);
+			// Bind the texture
+			glEnable(GL_TEXTURE_2D);
+			if (currentGameState == PLAYING) {
+				tex_crate.Use();
+			}
+			if (currentGameState == LEVEL2_PLAYING) {
+				tex_barell.Use();
+			}
 
-		// Bind the texture
-		glEnable(GL_TEXTURE_2D);
-		tex_crate.Use();
+			// Set color to white to avoid any color tint
+			glColor3f(1.0f, 1.0f, 1.0f);
 
-		// Set color to white to avoid any color tint
-		glColor3f(1.0f, 1.0f, 1.0f);
+			// Draw the textured crate
+			glBegin(GL_QUADS);
 
-		// Draw the textured crate
-		glBegin(GL_QUADS);
+			// Front face
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, depth / 2);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, depth / 2);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, depth / 2);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, depth / 2);
 
-		// Front face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, depth / 2);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, depth / 2);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, depth / 2);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, depth / 2);
+			// Back face
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, -depth / 2);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, -depth / 2);
 
-		// Back face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, -depth / 2);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, -depth / 2);
+			// Left face
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(-width / 2, -height / 2, depth / 2);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(-width / 2, height / 2, depth / 2);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, -depth / 2);
 
-		// Left face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-width / 2, -height / 2, depth / 2);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-width / 2, height / 2, depth / 2);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, -depth / 2);
+			// Right face
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(width / 2, -height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, depth / 2);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, depth / 2);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(width / 2, height / 2, -depth / 2);
 
-		// Right face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(width / 2, -height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, depth / 2);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, depth / 2);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(width / 2, height / 2, -depth / 2);
+			// Top face
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, depth / 2);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, depth / 2);
 
-		// Top face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, height / 2, depth / 2);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, height / 2, depth / 2);
+			// Bottom face
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, -depth / 2);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, -height / 2, depth / 2);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, -height / 2, depth / 2);
 
-		// Bottom face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-width / 2, -height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(width / 2, -height / 2, -depth / 2);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(width / 2, -height / 2, depth / 2);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-width / 2, -height / 2, depth / 2);
+			glEnd();
 
-		glEnd();
+			glDisable(GL_TEXTURE_2D);
+			glPopMatrix();
 
-		glDisable(GL_TEXTURE_2D);
-		glPopMatrix();
+		
 	}
 
 
@@ -882,6 +889,84 @@ Crate crate55(-3.3f, 6.6f, -23.2f, 1.0f, 1.0f, 1.0f);
 Crate crate56(-5.4f, 6.6f, -23.2f, 1.0f, 1.0f, 1.0f);
 Crate crate57(-4.9f, 6.6f, -32.6f, 1.0f, 1.0f, 1.0f);
 Crate crate58(-2.0f, 6.6f, -32.6f, 1.0f, 1.0f, 1.0f);
+
+
+class crateModel {
+public:
+	float x, y, z;
+	float radius;
+	bool collected;
+
+	crateModel(float _x, float _y, float _z, float _radius)
+		: x(_x), y(_y), z(_z), radius(_radius), collected(false) {}
+
+	void draw() {
+		//if (collected) return; // Skip drawing if the key is collected
+
+		// Calculate the vertical offset using a sine wave for smooth up and down movement
+		//float verticalOffset = 0.2f * sin(time);
+
+		glPushMatrix();
+		glTranslatef(x, y + 0.3, z); // Apply the vertical offset
+
+		glEnable(GL_TEXTURE_2D);  // Enable 2D texturing
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset the color to white
+
+		// Reset material properties (use white diffuse and ambient to avoid color influence)
+		GLfloat defaultDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat defaultAmbient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat defaultSpecular[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // Specular off for simplicity
+		GLfloat defaultShininess = 0.0f;
+
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, defaultShininess);
+
+		// Draw the coin model
+		glScalef(0.0015f, 0.0015f, 0.0015f); // Scale the model as needed
+		model_crate.Draw();
+
+		glPopMatrix();
+		glDisable(GL_TEXTURE_2D);
+	}
+	
+};
+crateModel cratem1(-3.1f, -0.3f, 9.0f, 1.0f);
+crateModel cratem2(-4.3f, -0.3f, 9.0f, 1.0f);
+crateModel cratem3(-5.4f, -0.3f, 9.0f, 1.0f);
+crateModel cratem4(-2.9f, -0.3f, 4.8f, 1.0f);
+crateModel cratem5(4.1f, -0.3f, 6.7f, 1.0f);
+crateModel cratem6(4.1f, -0.3f, 5.8f, 1.0f);
+crateModel cratem7(4.1f, -0.3f, 4.8f, 1.0f);
+crateModel cratem8(-0.5f, -0.3f, -1.9f, 1.0f);
+crateModel cratem9(-1.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem10(-2.7f, -0.3f, -1.9f, 1.0f);
+crateModel cratem11(-3.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem12(-4.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem13(-5.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem14(2.7f, -0.3f, -4.5f, 1.0f);
+crateModel cratem15(3.7f, -0.3f, -4.5f, 1.0f);
+crateModel cratem16(4.7f, -0.3f, -4.5f, 1.0f);
+crateModel cratem17(5.7f, -0.3f, -4.5f, 1.0f);
+
+crateModel cratem18(-3.1f, -0.3f, 9.0f, 1.0f);
+crateModel cratem19(-4.3f, -0.3f, 9.0f, 1.0f);
+crateModel cratem20(-5.4f, -0.3f, 9.0f, 1.0f);
+crateModel cratem21(-2.9f, -0.3f, 4.8f, 1.0f);
+crateModel cratem22(4.1f, -0.3f, 6.7f, 1.0f);
+crateModel cratem23(4.1f, -0.3f, 5.8f, 1.0f);
+crateModel cratem24(4.1f, -0.3f, 4.8f, 1.0f);
+crateModel cratem25(-0.5f, -0.3f, -1.9f, 1.0f);
+crateModel cratem26(-1.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem27(-2.7f, -0.3f, -1.9f, 1.0f);
+crateModel cratem28(-3.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem29(-4.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem30(-5.6f, -0.3f, -1.9f, 1.0f);
+crateModel cratem31(2.7f, -0.3f, -4.5f, 1.0f);
+crateModel cratem32(3.7f, -0.3f, -4.5f, 1.0f);
+crateModel cratem33(4.7f, -0.3f, -4.5f, 1.0f);
+crateModel cratem34(5.7f, -0.3f, -4.5f, 1.0f);
 
 class SwingingTrap {
 public:
@@ -2183,9 +2268,47 @@ void checkGem() {
 	if (score == 1000) {
 		gem1.draw(time);
 		gem1.checkCollision(playerX, playerY, playerZ);
+		gem2.draw(time);
+		gem2.checkCollision(playerX, playerY, playerZ);
 	}
 }
 
+void drawCratesModels(){
+	cratem1.draw();
+	cratem2.draw();
+	cratem3.draw();
+	cratem4.draw();
+	cratem5.draw();
+	cratem6.draw();
+	cratem7.draw();
+	cratem8.draw();
+	cratem9.draw();
+	cratem10.draw();
+	cratem11.draw();
+	cratem12.draw();
+	cratem13.draw();
+	cratem14.draw();
+	cratem15.draw();
+	cratem16.draw();
+	cratem17.draw();
+	cratem18.draw();
+	cratem19.draw();
+	cratem20.draw();
+	cratem21.draw();
+	cratem22.draw();
+	cratem23.draw();
+	cratem24.draw();
+	cratem25.draw();
+	cratem26.draw();
+	cratem27.draw();
+	cratem28.draw();
+	cratem29.draw();
+	cratem30.draw();
+	cratem31.draw();
+	cratem32.draw();
+	cratem33.draw();
+	cratem34.draw();
+}
 
 void drawCrates() {
 	crate1.draw();
@@ -2516,6 +2639,8 @@ void Display() {
 		door2.draw();
 		glPopMatrix();
 
+		drawCratesModels();
+
 		float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Convert milliseconds to seconds
 		float deltaTime = currentTime - lastFrameTime;
 		lastFrameTime = currentTime;
@@ -2687,7 +2812,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		exit(EXIT_SUCCESS);
 	}
 	if (((newPlayerX >= -5.6f && newPlayerX <= 5.6f && newPlayerZ >= -13.3f && newPlayerZ <= 13.3f) || // Main room
-		//(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
+		(newPlayerX >= 5.6f && newPlayerX <= 9.2f && newPlayerZ >= -1.5f && newPlayerZ <= 1.5f) || // Corridor 1
 		(newPlayerX >= 9.2f && newPlayerX <= 20.8f && newPlayerZ >= -10.2f && newPlayerZ <= 10.2f) || // Room 1
 		(newPlayerX >= -1.3f && newPlayerX <= 1.3f && newPlayerZ >= -19.7f && newPlayerZ <= -13.2f) || // Corridor 2
 		(newPlayerX >= -5.7f && newPlayerX <= 5.7f && newPlayerZ >= -40.3f && newPlayerZ <= -19.7f)) && // Room 2
@@ -2703,7 +2828,7 @@ void Keyboard(unsigned char key, int x, int y) {
 	else {
 		std::cout << "Collision detected! Player cannot move in this direction." << std::endl;
 	}
-	if (newPlayerX >= courtMinX && newPlayerX <= courtMaxX && newPlayerZ >= courtMinZ && newPlayerZ <= courtMaxZ && !checkAllCratesBarrelsCollisions2(newPlayerX, newPlayerZ) && currentGameState == LEVEL2_PLAYING) {
+	if (newPlayerX >= courtMinX && newPlayerX <= courtMaxX && newPlayerZ >= courtMinZ && newPlayerZ <= courtMaxZ && /*!checkAllCratesBarrelsCollisions2(newPlayerX, newPlayerZ) &&*/ currentGameState == LEVEL2_PLAYING) {
 		// If the new position is valid, update the player's position
 		playerX = newPlayerX;
 		playerZ = newPlayerZ;
@@ -2763,7 +2888,7 @@ void LoadAssets()
 	model_swtrap.Load("Models/key/broom 3ds.3DS");
 	model_key.Load("Models/key/Key9.3DS");
 	model_trap.Load("Models/trap/t.3ds");
-	model_crate.Load("Models/house/house.3ds");
+	model_crate.Load("Models/crate/barrel.3ds");
 	model_player.Load("Models/player/pl.3ds");
 	model_door1.Load("Models/door/door1.3ds");
 	model_door2.Load("Models/door/d.3ds");
